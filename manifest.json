@@ -2,15 +2,40 @@
   "name": "Histree",
   "description": "Tree-based browser history management and visualization",
   "version": "0.1",
-  "default_locale": "en",
   "author": "Joel Gustafson",
   "permissions": [
     "tabs",
     "webNavigation"
   ],
   "background": {
-    "persistent": false,
+    "persistent": true,
     "scripts": ["background.js"]
+  },
+  "commands": {
+    "move-up": {
+      "suggested_key": {
+        "default": "Ctrl+Up"
+      },
+      "description": "Toggle feature foo"
+    },
+    "move-down": {
+      "suggested_key": {
+        "default": "Ctrl+Down"
+      },
+      "description": "Toggle feature foo"
+    },
+    "move-left": {
+      "suggested_key": {
+        "default": "Ctrl+Left"
+      },
+      "description": "Toggle feature foo"
+    },
+    "move-right": {
+      "suggested_key": {
+        "default": "Ctrl+Right"
+      },
+      "description": "Toggle feature foo"
+    }
   },
   "manifest_version": 2
 }
