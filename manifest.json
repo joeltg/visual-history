@@ -1,0 +1,16 @@
+{
+  "name": "Histree",
+  "description": "Tree-based browser history management and visualization",
+  "version": "0.1",
+  "default_locale": "en",
+  "author": "Joel Gustafson",
+  "permissions": [
+    "tabs",
+    "webNavigation"
+  ],
+  "background": {
+    "persistent": false,
+    "scripts": ["background.js"]
+  },
+  "manifest_version": 2
+}
