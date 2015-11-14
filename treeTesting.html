@@ -71,12 +71,14 @@
 <script>
 
 var treeData = [
-	{"name": "Hacker News", "children": [
-		{"name": "GRASP", "children": [
-			{"name": "JG Wikipedia"},
-			{"name": "GRAIL"}
+	{"name": "Hacker News",
+	 "icon": "testShot.png",
+	 "children": [
+		{"name": "GRASP","icon": "testShot.png", "children": [
+			{"name": "JG Wikipedia", "icon": "testShot.png"},
+			{"name": "GRAIL", "icon": "testShot.png"}
         ]},
-        {"name": "Xanadu 2.0"}
+        {"name": "Xanadu 2.0", "icon": "testShot.png"}
         ]}
 ];
 
@@ -129,9 +131,28 @@ function update(source) {
 	  .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
 	  .on("click", click);
 
+/*
+	 nodeEnter.append("rect")
+	 	.attr("rx", 6)
+	 	.attr("ry", 6)
+	 	.attr("x", -12.5)
+	 	.attr("y", -12.5)
+	 	.attr("width", 25)
+	 	.attr("height", 25);
+*/
+	 	
+	 nodeEnter.append("image")
+      .attr("xlink:href", function(d) { return d.icon; })
+      .attr("x", "-12px")
+      .attr("y", "-12px")
+      .attr("width", "24px")
+      .attr("height", "24px");
+
+/*
   nodeEnter.append("circle")
 	  .attr("r", 1e-6)
 	  .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+*/
 
   nodeEnter.append("text")
 	  .attr("x", function(d) { return d.children || d._children ? -13 : 13; })
@@ -166,7 +187,7 @@ function update(source) {
 
   // Update the links…
   var link = svg.selectAll("path.link")
-	  .data(links, function(d) { return d.target.id; });
+	  .data(links, function(d) {return d.target.id;});
 
   // Enter any new links at the parent's previous position.
   link.enter().insert("path", "g")
