@@ -6,6 +6,7 @@ var Node = function(url) {
     this.parent = null;
     this.depth = 0;
     this.url = url;
+    this.image = null;
     this.children = [];
     this.insert = function(url) {
         var node = new Node(url);
@@ -101,12 +102,13 @@ function navigateTo(tabId, url, title) {
 }
 
 function takeScreenshot(node) {
-    /*
-    console.log("taking screenshot");
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
-        console.log(dataUrl);
+        if (dataUrl) {
+            node.image = dataUrl;
+            console.log(dataUrl);
+            //saveImage(dataUrl);
+        }
     });
-    */
 }
 
 function up(tab) {
@@ -155,8 +157,8 @@ function right(tab) {
     printTab(tab);
 }
 
-function enterNavigation(tab, move) {
-    move(tab);
+function enterNavigation(tab, firstMove) {
+    firstMove(tab);
 }
 
 function printTab(tab) {
@@ -171,4 +173,35 @@ function formatTab(tab, indent) {
     for (var i = 0; i < tab.children.length; i++) {
         formatTab(tab.children[i], indent + 4);
     }
+}
+
+
+function saveImage(dataUrl) {
+    var BASE64_MARKER = ';base64,';
+    var base64Index = dataUrl.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
+    var base64 = dataUrl.substring(base64Index);
+    var raw = window.atob(base64);
+    var rawLength = raw.length;
+    var array = new Uint8Array(new ArrayBuffer(rawLength));
+
+    for (i = 0; i < rawLength; ++i) {
+        array[i] = raw.charCodeAt(i);
+    }
+    blob = new Blob([array]);
+
+    var reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onload = function (event) {
+        var save = document.createElement('a');
+        save.href = event.target.result;
+        save.target = '_blank';
+        save.download = 'pic.png' || 'unknown';
+
+        var e = document.createEvent('Event');
+        e.initEvent('click', true, true);
+        save.dispatchEvent(e);
+        (window.URL || window.webkitURL).revokeObjectURL(save.href);
+    };
+
+    fileWriter.write(blob);
 }
