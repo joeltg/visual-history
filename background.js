@@ -20,6 +20,15 @@ var Node = function(url) {
 
 var tabs = {};
 
+chrome.runtime.onMessage.addListener(function(message, sender) {
+    if (message.key == 'ctrl') exitNavigation(sender.tab.id);
+    else if (message.key == 'up') up(sender.tab.id);
+    else if (message.key == 'down') down(sender.tab.id);
+    else if (message.key == 'left') left(sender.tab.id);
+    else if (message.key == 'right') right(sender.tab.id);
+});
+
+
 chrome.commands.onCommand.addListener(function(command) {
     var fun;
     if (command == 'move-up') fun = up;
@@ -32,6 +41,7 @@ chrome.commands.onCommand.addListener(function(command) {
     }
     chrome.tabs.query({active:true,windowType:"normal", currentWindow: true},function(d){enterNavigation(d[0].id, fun);})
 });
+
 
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
@@ -102,6 +112,7 @@ function navigateTo(tabId, url, title) {
 }
 
 function takeScreenshot(node) {
+    /*
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
         if (dataUrl) {
             node.image = dataUrl;
@@ -109,37 +120,26 @@ function takeScreenshot(node) {
             //saveImage(dataUrl);
         }
     });
+    */
 }
 
 function up(tab) {
-    if (tabs[tab] && tabs[tab].current.parent) {
-        tabs[tab].override = true;
-        var parent = tabs[tab].current.parent;
-        chrome.tabs.update(tab, {url: parent.url});
-        tabs[tab].current = parent;
-    }
+    if (tabs[tab] && tabs[tab].current.parent)
+        tabs[tab].current = tabs[tab].current.parent;
     printTab(tab);
 }
 
 function down(tab) {
-    if (tabs[tab] && tabs[tab].current.children.length > 0) {
-        tabs[tab].override = true;
-        var child = tabs[tab].current.children[tabs[tab].current.children.length - 1];
-        chrome.tabs.update(tab, {url: child.url});
-        tabs[tab].current = child;
-    }
+    if (tabs[tab] && tabs[tab].current.children.length > 0)
+        tabs[tab].current = tabs[tab].current.children[tabs[tab].current.children.length - 1];
     printTab(tab);
 }
 
 function left(tab) {
     if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
         var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
-        if (index > 0) {
-            tabs[tab].override = true;
-            var sibling = tabs[tab].current.parent.children[index - 1];
-            chrome.tabs.update(tab, {url: sibling.url});
-            tabs[tab].current = sibling;
-        }
+        if (index > 0)
+            tabs[tab].current = tabs[tab].current.parent.children[index - 1];
     }
     printTab(tab);
 }
@@ -147,34 +147,45 @@ function left(tab) {
 function right(tab) {
     if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
         var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
-        if (index > -1 && index < tabs[tab].current.parent.children.length - 1) {
-            tabs[tab].override = true;
-            var sibling = tabs[tab].current.parent.children[index + 1];
-            chrome.tabs.update(tab, {url: sibling.url});
-            tabs[tab].current = sibling;
-        }
+        if (index > -1 && index < tabs[tab].current.parent.children.length - 1)
+            tabs[tab].current = tabs[tab].current.parent.children[index + 1];
     }
     printTab(tab);
 }
 
-function enterNavigation(tab, firstMove) {
-    firstMove(tab);
+function enterNavigation(tabId, firstMove) {
+    firstMove(tabId);
+}
+
+function exitNavigation(tabId) {
+    chrome.tabs.get(tabId, function(tab) {
+        if (tab.url != tabs[tab.id].current.url) {
+            tabs[tab.id].override = true;
+            chrome.tabs.update(tab.id, {url: tabs[tab.id].current.url});
+        }
+    });
 }
 
 function printTab(tab) {
-    formatTab(tabs[tab]);
-    console.log("CURRENT:", tabs[tab].current.url);
+    formatTab(tabs[tab], 2, tabs[tab].current);
     console.log('');
 }
 
-function formatTab(tab, indent) {
-    if (!indent) indent = 0;
-    console.log(Array(indent).join(' ') + tab.url);
+function formatTab(tab, indent, current) {
+    var base, fill;
+    if (tab == current) {
+        base = '1';
+        fill = Array(indent - 1).join(' ');
+    }
+    else {
+        base = '';
+        fill = Array(indent).join(' ');
+    }
+    console.log(base + fill + tab.url);
     for (var i = 0; i < tab.children.length; i++) {
-        formatTab(tab.children[i], indent + 4);
+        formatTab(tab.children[i], indent + 4, current);
     }
 }
-
 
 function saveImage(dataUrl) {
     var BASE64_MARKER = ';base64,';
@@ -204,4 +215,4 @@ function saveImage(dataUrl) {
     };
 
     fileWriter.write(blob);
-
+}
