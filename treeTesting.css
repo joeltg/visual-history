@@ -1,22 +1,19 @@
-.mainPage {
-	padding: 10% 10% 10% 10%;
-/* 	background-color: gray; */
+.node {
+	cursor: pointer;
 }
 
-.visitedPage {
-	height: 20%;
-	width: 20%;
-	background: #D8D8D8;
-	border: 4px solid #979797;
-	border-radius: 8px;
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 3px;
 }
 
-.pageImg {
-	width: 100%;	
+.node text {
+  font: 12px sans-serif;
 }
 
-.pageName {
-	text-align: center;
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
 }
-
-
