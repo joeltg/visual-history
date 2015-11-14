@@ -96,7 +96,12 @@ var tree = d3.layout.tree()
 	.size([height, width]);
 
 var diagonal = d3.svg.diagonal()
-	.projection(function(d) { return [d.x, d.y+50]; });
+	.projection(function(d) { return [d.x, d.y]; });
+	
+var lineFunction = d3.svg.line()
+	.x(function(d) { return d.x; })
+    .y(function(d) { return d.y; })
+	.interpolate("linear");
 
 var svg = d3.select("body").append("svg")
 	.attr("width", width + margin.right + margin.left)
@@ -197,28 +202,14 @@ function update(source) {
   // Update the links…
   var link = svg.selectAll("path.link")
 	  .data(links, function(d) {return d.target.id;});
-
-  // Enter any new links at the parent's previous position.
-  link.enter().insert("path", "g")
-	  .attr("class", "link")
-	  .attr("d", function(d) {
-		var o = {x: source.x0, y: source.y0};
-		return diagonal({source: o, target: o});
-	  });
-
-  // Transition links to their new position.
-  link.transition()
-	  .duration(duration)
-	  .attr("d", diagonal);
-
-  // Transition exiting nodes to the parent's new position.
-  link.exit().transition()
-	  .duration(duration)
-	  .attr("d", function(d) {
-		var o = {x: source.x, y: source.y};
-		return diagonal({source: o, target: o});
-	  })
-	  .remove();
+	  
+	  //draw lines from below text to above image
+link.enter().append("line")
+    .attr("class", "link")
+    .attr("x1", function(d) { return d.source.x; })
+    .attr("y1", function(d) { return d.source.y+60; })
+    .attr("x2", function(d) { return d.target.x; })
+    .attr("y2", function(d) { return d.target.y-40; })
 
   // Stash the old positions for transition.
   nodes.forEach(function(d) {
