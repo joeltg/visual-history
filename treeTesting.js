@@ -1,5 +1,6 @@
 var treeData = [
 	{"name": "Hacker News",
+	 "url": "news.yc",
 	 "icon": "testShot.png",
 	 "children": [
 		{"name": "GRASP","icon": "testShot.png", "children": [
@@ -9,6 +10,17 @@ var treeData = [
         {"name": "Xanadu 2.0", "icon": "testShot.png"}
         ]}
 ];
+
+//Selecting last element in array
+if (!Array.prototype.last){
+    Array.prototype.last = function(){
+        return this[this.length - 1];
+    };
+};
+
+
+//Add checkKey
+document.onkeydown = checkKey;
 
 // ************** Generate the tree diagram	 *****************
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
@@ -36,6 +48,27 @@ update(root);
 
 d3.select(self.frameElement).style("height", "500px");
 
+//this snippet grabs the furtherest right element
+//(which I think is the node we are on to start...)
+var currentNode = tree.nodes(root)[0];
+while (currentNode.children) {
+	currentNode = currentNode.children.last();
+}
+
+
+//var ssNode = svg.select();
+//var ssNode = svg.selectAll(currentNode.name);
+  //console.log("SS: "+ ssNode);
+  //currentNode.style("color", "red");
+  //currentNode.style({stroke: "red", "stroke-width": "2px"});
+/*
+  console.log(currentNode);
+  var finderText = "g.node."+currentNode.name;
+  console.log(finderText);
+  d3.select(finderText).style("stroke","red");
+*/
+
+
 function update(source) {
 
   // Compute the new tree layout.
@@ -44,6 +77,12 @@ function update(source) {
 
   // Normalize for fixed-depth.
   nodes.forEach(function(d) { d.y = d.depth * 180; });
+  
+  nodes.forEach(function(d) {
+	  if (d == currentNode) {
+		  d.attr("color", "red");
+	  }
+	});
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -54,16 +93,6 @@ function update(source) {
 	  .attr("class", "node")
 	  .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
 	  .on("click", click);
-
-/*
-	 nodeEnter.append("rect")
-	 	.attr("rx", 6)
-	 	.attr("ry", 6)
-	 	.attr("x", -12.5)
-	 	.attr("y", -12.5)
-	 	.attr("width", 25)
-	 	.attr("height", 25);
-*/
 	 	
 	 nodeEnter.append("image")
       .attr("xlink:href", function(d) { return d.icon; })
@@ -72,48 +101,27 @@ function update(source) {
       .attr("width", "100px")
       .attr("height", "100px");
 
-/*
-  nodeEnter.append("circle")
-	  .attr("r", 1e-6)
-	  .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
-*/
-
-/*
-  nodeEnter.append("text")
-	  .attr("x", function(d) { return d.children || d._children ? -13 : 13; })
-	  .attr("dy", ".35em")
-	  .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-	  .text(function(d) { return d.name; })
-	  .style("fill-opacity", 1e-6);
-*/
-
-  nodeEnter.append("text")
+	 nodeEnter.append("text")
 	  .attr("x", 0)
 	  .attr("dy", "4.5em")
 	  .attr("text-anchor", "middle")
 	  .text(function(d) { return d.name; })
-	  .style("fill-opacity", 1e-6);
+	  .style("fill-opacity", 1e-6)
+	  .style("font-weight", "bold");
 
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
 	  .duration(duration)
 	  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-  nodeUpdate.select("circle")
-	  .attr("r", 10)
-	  .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
-
   nodeUpdate.select("text")
 	  .style("fill-opacity", 1);
-
+	 
   // Transition exiting nodes to the parent's new position.
   var nodeExit = node.exit().transition()
 	  .duration(duration)
 	  .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
 	  .remove();
-
-  nodeExit.select("circle")
-	  .attr("r", 1e-6);
 
   nodeExit.select("text")
 	  .style("fill-opacity", 1e-6);
@@ -135,6 +143,39 @@ link.enter().append("line")
 	d.x0 = d.x;
 	d.y0 = d.y;
   });
+}
+
+//Handle keyboard events
+function checkKey(e) {
+    e = e || window.event;
+
+    if (e.keyCode == '38') { //up
+        if (currentNode.parent) {
+	        currentNode = currentNode.parent;
+        }
+    } else if (e.keyCode == '40') { //down
+        if (currentNode.children) {
+	        var last = currentNode.children.length-1;
+	        currentNode = currentNode.children[last]
+        }
+    } else if (e.keyCode == '37') { //left
+       if (currentNode.parent) {
+	       var sisNodes = currentNode.parent.children;
+	       var index = sisNodes.indexOf(currentNode);
+	       if (index!=0) {
+		       currentNode = sisNodes[index-1]
+	       }
+	    }	       
+    } else if (e.keyCode == '39') { //right
+       if (currentNode.parent) {
+	       var sisNodes = currentNode.parent.children;
+	       var index = sisNodes.indexOf(currentNode);
+	       if (index!=sisNodes.length-1) {
+		       currentNode = sisNodes[index+1]
+	       }
+	    }
+    }
+    update(svg);
 }
 
 // Toggle children on click.
