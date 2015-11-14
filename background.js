@@ -21,7 +21,6 @@ var Node = function(url) {
 var tabs = {};
 
 chrome.commands.onCommand.addListener(function(command) {
-	
     var fun;
     if (command == 'move-up') fun = up;
     else if (command == 'move-down') fun = down;
@@ -119,7 +118,6 @@ function up(tab) {
         chrome.tabs.update(tab, {url: parent.url});
         tabs[tab].current = parent;
     }
-    console.log(tab);
     printTab(tab);
 }
 
@@ -206,4 +204,4 @@ function saveImage(dataUrl) {
     };
 
     fileWriter.write(blob);
-}
+
