@@ -5,7 +5,9 @@
   "author": "Joel Gustafson",
   "permissions": [
     "tabs",
-    "webNavigation"
+    "webNavigation",
+    "activeTab",
+    "<all_urls>"
   ],
   "background": {
     "persistent": true,

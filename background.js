@@ -1,5 +1,6 @@
 var DEPTH_LIMIT = 10;
 var DEPTH = 0;
+var IMAGES = false;
 
 var Node = function(url) {
     this.parent = null;
@@ -19,103 +20,68 @@ var Node = function(url) {
 var tabs = {};
 
 chrome.commands.onCommand.addListener(function(command) {
-    console.log(command);
-    if (command == 'move-up') {
-
-    }
-    else if (command == 'move-down') {
-
-    }
-    else if (command == 'move-left') {
-
-    }
-    else if (command == 'move-right') {
-
-    }
+    var fun;
+    if (command == 'move-up') fun = up;
+    else if (command == 'move-down') fun = down;
+    else if (command == 'move-left') fun = left;
+    else if (command == 'move-right') fun = right;
     else {
         console.log("God does not like us");
+        return;
     }
+    chrome.tabs.query({active:true,windowType:"normal", currentWindow: true},function(d){enterNavigation(d[0].id, fun);})
 });
+
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     delete tabs[tabId];
-    console.log(tabs);
 });
 
-chrome.tabs.onReplaced.addListener(function(addedtabId, removedTabId) {
-    console.log("added", addedtabId);
-    console.log("removed", removedTabId);
-    if (tabs[removedTabId]) {
-        navigateTo(addedtabId, tabs[removedTabId].url);
-        delete tabs[removedTabId];
-        console.log(tabs);
-    }
+chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
+    navigateTo(removedTabId, tabs[addedTabId].url);
+    delete tabs[addedTabId];
+    printTab(removedTabId);
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
-    if (details.transitionQualifiers.indexOf('forward_back') > -1) {
-        if (tabs[details.tabId]) {
-            var node =  tabs[details.tabId].current;
-            if (node.parent && node.parent.url == details.url) {
-                // back
-                console.log("we went back!");
-                tabs[details.tabId].current = node.parent;
-            }
-            else if (node.children.length > 0) {
-                // forward
-                console.log("we went forward!");
-                tabs[details.tabId].current = node.children[node.children.length - 1]; // This will have to change
-            }
-            else {
-                console.log("everything is wrong");
-            }
-        }
-        return;
-    }
-
     var type = details.transitionType;
     switch (type) {
         case 'link':
-            navigateTo(details.tabId, details.url);
             break;
         case 'typed':
-            navigateTo(details.tabId, details.url);
             break;
         case 'auto_bookmark':
-            navigateTo(details.tabId, details.url);
             break;
         case 'auto_subframe':
             // do nothing
-            break;
+            return;
         case 'manual_subframe':
-            navigateTo(details.tabId, details.url, details.title);
             break;
         case 'generated':
-            navigateTo(details.tabId, details.url, details.title);
             break;
         case 'auto_toplevel':
-            break;
+            return;
         case 'form_submit':
-            // do nothing? ********************
-            break;
+            // do nothing? ????????????????????
+            return;
         case 'reload':
             // do nothing
-            break;
+            return;
         case 'keyword':
-            // do nothing? ********************
-            break;
+            // do nothing? ????????????????????
+            return;
         case 'keyword_generated':
-            // do nothing? ********************
-            break;
+            // do nothing? ????????????????????
+            return;
     }
+    if (tabs[details.tabId] && tabs[details.tabId].override) tabs[details.tabId].override = false;
+    else navigateTo(details.tabId, details.url);
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
     if (tabs[details.tabId]) {
         if (tabs[details.tabId].current.url == details.url) {
-
-
-
+            takeScreenshot(tabs[details.tabId].current);
         }
     }
 });
@@ -131,5 +97,78 @@ function navigateTo(tabId, url, title) {
         node.current = node;
         tabs[tabId] = node;
     }
-    console.log(tabs);
+    printTab(tabId);
+}
+
+function takeScreenshot(node) {
+    /*
+    console.log("taking screenshot");
+    chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
+        console.log(dataUrl);
+    });
+    */
+}
+
+function up(tab) {
+    if (tabs[tab] && tabs[tab].current.parent) {
+        tabs[tab].override = true;
+        var parent = tabs[tab].current.parent;
+        chrome.tabs.update(tab, {url: parent.url});
+        tabs[tab].current = parent;
+    }
+    printTab(tab);
+}
+
+function down(tab) {
+    if (tabs[tab] && tabs[tab].current.children.length > 0) {
+        tabs[tab].override = true;
+        var child = tabs[tab].current.children[tabs[tab].current.children.length - 1];
+        chrome.tabs.update(tab, {url: child.url});
+        tabs[tab].current = child;
+    }
+    printTab(tab);
+}
+
+function left(tab) {
+    if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
+        var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
+        if (index > 0) {
+            tabs[tab].override = true;
+            var sibling = tabs[tab].current.parent.children[index - 1];
+            chrome.tabs.update(tab, {url: sibling.url});
+            tabs[tab].current = sibling;
+        }
+    }
+    printTab(tab);
+}
+
+function right(tab) {
+    if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
+        var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
+        if (index > -1 && index < tabs[tab].current.parent.children.length - 1) {
+            tabs[tab].override = true;
+            var sibling = tabs[tab].current.parent.children[index + 1];
+            chrome.tabs.update(tab, {url: sibling.url});
+            tabs[tab].current = sibling;
+        }
+    }
+    printTab(tab);
+}
+
+function enterNavigation(tab, move) {
+    move(tab);
+}
+
+function printTab(tab) {
+    formatTab(tabs[tab]);
+    console.log("CURRENT:", tabs[tab].current.url);
+    console.log('');
+}
+
+function formatTab(tab, indent) {
+    if (!indent) indent = 0;
+    console.log(Array(indent).join(' ') + tab.url);
+    for (var i = 0; i < tab.children.length; i++) {
+        formatTab(tab.children[i], indent + 4);
+    }
 }
