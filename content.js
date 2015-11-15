@@ -48,16 +48,16 @@ document.documentElement.onkeyup = function(e) {
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     console.log(message);
     if (!NAV) {
-        createTree();
+        createTree(message.tree);
         NAV = true;
     }
-    if (message == 'up') up();
-    else if (message == 'down') down();
-    else if (message == 'left') left();
-    else if (message == 'right') right();
+    if (message.move == 'up') up();
+    else if (message.move == 'down') down();
+    else if (message.move == 'left') left();
+    else if (message.move == 'right') right();
 });
 
-
+/*
 var treeData = [
     {"name": "Hacker News",
         "url": "news.yc",
@@ -70,6 +70,7 @@ var treeData = [
             {"name": "Xanadu 2.0", "icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif"}
         ]}
 ];
+*/
 
 //Selecting last element in array
 if (!Array.prototype.last){
@@ -84,19 +85,24 @@ var i = 0,
     duration = 750,
     root;
 
-root = treeData[0];
-root.x0 = 0;
-root.y0 = height / 2;
+
 
 var tree, svg, currentNode;
 
-function createTree() {
+function createTree(treeData) {
+    root = treeData;
+    root.x0 = 0;
+    root.y0 = height / 2;
+
     document.getElementById("histree").style.zIndex = 1000;
-    tree = d3.layout.tree().size([height / 2.0, width / 2.0]);
+    var treeWidth = Math.min(width, 400);
+    var treeHeight = Math.min(height, 400);
+    tree = d3.layout.tree().size([treeWidth, treeHeight]);
     svg = d3.select("#histree").append("svg")
         .attr("width", width)
         .attr("height", height)
-        .append("g");
+        .append("g")
+        .attr("transform", "translate(" + String((width - treeWidth) / 2.0) + "," + String(50) + ")");
     update(root);
     currentNode = tree.nodes(root)[0];
     while (currentNode.children) {
@@ -208,8 +214,9 @@ function update(source) {
     });
 }
 
-document.documentElement.onkeydown = checkKey;
-createTree();
+//document.documentElement.onkeydown = checkKey;
+//createTree();
+
 //Handle keyboard events
 function checkKey(e) {
     if (!NAV) return;

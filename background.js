@@ -165,8 +165,20 @@ function right(tab) {
 }
 
 function navigate(tabId, move) {
-    var m = move(tabId);
-    chrome.tabs.sendMessage(tabId, {move: m}, function() {});
+    move = move(tabId);
+    chrome.tabs.sendMessage(tabId, {move: move, tree: getTree(tabs[tabId], tabs[tabId].current)}, function() {});
+}
+
+function getTree(node, current) {
+    var tree = {
+        name: node.title,
+        url: node.url,
+        icon: node.icon_url ? node.icon_url : "https://752f77aa107738c25d93-f083e9a6295a3f0714fa019ffdca65c3.ssl.cf1.rackcdn.com/home/v8/icons/icon_website_hosting.gif",
+        current: node == current,
+        children: []
+    };
+    for (var i = 0; i < node.children.length; i++) tree.children.push(getTree(node.children[i]));
+    return tree;
 }
 
 function exitNavigation(tabId) {
