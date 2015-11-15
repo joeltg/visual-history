@@ -5,6 +5,7 @@ var IMAGES = false;
 var Node = function(url, icon_url) {
     this.parent = null;
     this.depth = 0;
+    this.max_depth = 0;
     this.url = url;
     this.icon_url = icon_url;
     this.image = null;
@@ -110,6 +111,7 @@ function navigateTo(tabId, url, icon_url) {
     if (tabs[tabId]) {
         // tabId in tabs
         tabs[tabId].current = tabs[tabId].current.insert(url, icon_url);
+        tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, tabs[tabId].current.depth);
     }
     else {
         // tabId not in tabs
@@ -166,14 +168,17 @@ function right(tab) {
 
 function navigate(tabId, move) {
     move = move(tabId);
-    chrome.tabs.sendMessage(tabId, {move: move, tree: getTree(tabs[tabId], tabs[tabId].current)}, function() {});
+    var tree = getTree(tabs[tabId], tabs[tabId].current);
+    var depth_of_current = tabs[tabId].current.depth;
+    var max_depth = tabs[tabId].max_depth;
+    chrome.tabs.sendMessage(tabId, {move: move, tree: tree, depth_of_current: depth_of_current, max_depth: max_depth}, function() {});
 }
 
 function getTree(node, current) {
     var tree = {
         name: node == current ? node.title : node.title.substr(0, 30) + '... ',
         url: node == current ? node.url : node.url.substr(0, 40) + '... ',
-        icon: node.icon_url ? node.icon_url : "https://752f77aa107738c25d93-f083e9a6295a3f0714fa019ffdca65c3.ssl.cf1.rackcdn.com/home/v8/icons/icon_website_hosting.gif",
+        icon: node.icon_url ? node.icon_url : "http://blogs.gcu.edu/colangelo-college-of-business/wp-content/themes/gcublogs/img/default-placeholder.png",
         current: node == current,
         children: []
     };
