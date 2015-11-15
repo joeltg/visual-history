@@ -42,8 +42,8 @@ var svg = d3.select("body").append("svg")
 	.attr("width", width + margin.right + margin.left)
 	.attr("height", height + margin.top + margin.bottom)
 	.attr("class", "animated fadeIn")
-  .append("g")
-	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 	var defs = svg.append("defs");
 
@@ -87,6 +87,8 @@ while (currentNode.children) {
 
 function update(source) {
 
+	console.log(source);
+
   // Compute the new tree layout.
   var nodes = tree.nodes(root).reverse(),
 	  links = tree.links(nodes);
@@ -102,7 +104,8 @@ function update(source) {
   // Enter any new nodes at the parent's previous position.
   var nodeEnter = node.enter().append("g")
 	  .attr("class", "node")
-	  .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+	  .attr("transform", function(d) {
+	  	return "translate(" + source.y0 + "," + source.x0 + ")"; })
 	  .on("click", click);
 	 
 	 nodeEnter.append("image")
@@ -129,7 +132,8 @@ function update(source) {
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
 	  .duration(duration)
-	  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+	  .attr("transform", function(d) {
+	  	return "translate(" + d.x + "," + d.y + ")"; });
 
 	if (currentNode) {
 		for(i=0; i<node[0].length; i++) {
@@ -222,10 +226,3 @@ window.addEventListener("keydown", function(e) {
 function click(d) {
   update(d);
 }
-
-$('svg').blurjs({
-	source: 'body',
-	radius: 7,
-	overlay: 'rgba(255,255,255,0.4)'
-});
-
