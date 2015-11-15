@@ -25,7 +25,8 @@ var CTRL = false;
 var NAV = false;
 
 document.documentElement.onkeyup = function(e) {
-    if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "Meta") {
+    console.log(e.keyIdentifier);
+    if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "U+00A3" || e.keyIdentifier == "Meta") {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
         NAV = false;
@@ -69,7 +70,7 @@ function createTree(treeData) {
 
     document.getElementById("histree").style.zIndex = 1000;
     var treeWidth = Math.min(width, 400);
-    var treeHeight = Math.min(height, 400);
+    var treeHeight = Math.min(height, height);
     tree = d3.layout.tree().size([treeWidth, treeHeight]);
     svg = d3.select("#histree").append("svg")
         .attr("width", width)

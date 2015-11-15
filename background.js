@@ -171,8 +171,8 @@ function navigate(tabId, move) {
 
 function getTree(node, current) {
     var tree = {
-        name: node.title,
-        url: node.url,
+        name: node == current ? node.title : node.title.substr(0, 30) + '... ',
+        url: node == current ? node.url : node.url.substr(0, 40) + '... ',
         icon: node.icon_url ? node.icon_url : "https://752f77aa107738c25d93-f083e9a6295a3f0714fa019ffdca65c3.ssl.cf1.rackcdn.com/home/v8/icons/icon_website_hosting.gif",
         current: node == current,
         children: []
