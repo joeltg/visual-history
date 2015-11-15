@@ -1,3 +1,8 @@
+body {
+	background-image: url("testShot.png");
+}
+
+
 .node {
 	cursor: pointer;
 }

@@ -112,8 +112,6 @@ function update(source) {
       .attr("width", "100px")
       .attr("height", "100px");
 
-
-
 	 nodeEnter.append("text")
 	  .attr("x", 0)
 	  .attr("dy", "4.5em")
@@ -224,4 +222,10 @@ window.addEventListener("keydown", function(e) {
 function click(d) {
   update(d);
 }
+
+$('svg').blurjs({
+	source: 'body',
+	radius: 7,
+	overlay: 'rgba(255,255,255,0.4)'
+});
 
