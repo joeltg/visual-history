@@ -35,11 +35,7 @@ chrome.commands.onCommand.addListener(function(command) {
     else if (command == 'move-down') fun = down;
     else if (command == 'move-left') fun = left;
     else if (command == 'move-right') fun = right;
-    else {
-        console.log("God does not like us");
-        return;
-    }
-    chrome.tabs.query({active:true,windowType:"normal", currentWindow: true},function(d){enterNavigation(d[0].id, fun);})
+    chrome.tabs.query({active:true,windowType:"normal",currentWindow:true},function(d){enterNavigation(d[0].id, fun);});
 });
 
 
