@@ -40,3 +40,11 @@
     -webkit-animation-name: fadeIn; 
     animation-name: fadeIn; 
 }
+
+/*Shade attempt*/
+.shadow {
+	text-shadow: -1px -1px 5px #000000, -1px 0px 5px #000000, -1px 1px 5px #000000, 0px -1px 5px #000000, 0px 1px 5px #000000, 1px -1px 5px #000000, 1px 0px 5px #000000, 1px 1px 5px #000000
+}
+
+#svg-image-blur { height: 220px; width: 30px; }
+    #svg-image:hover { filter:url(#blur-effect-1); }

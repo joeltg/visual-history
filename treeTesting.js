@@ -27,7 +27,7 @@ if (!Array.prototype.last){
 document.onkeydown = checkKey;
 
 // ************** Generate the tree diagram	 *****************
-var margin = {top: 20, right: 120, bottom: 20, left: 120},
+var margin = {top: 50, right: 120, bottom: 20, left: 120},
 	width = 960 - margin.right - margin.left,
 	height = 1000 - margin.top - margin.bottom;
 	
@@ -44,6 +44,31 @@ var svg = d3.select("body").append("svg")
 	.attr("class", "animated fadeIn")
   .append("g")
 	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	var defs = svg.append("defs");
+
+	var filter = defs.append("filter")
+		.attr("id", "f1")
+		.attr("x", "0")
+		.attr("y", "0")
+		.attr("width", "500%")
+		.attr("height", "500%");
+
+	filter.append("feOffset")
+		.attr("result", "offOut")
+		.attr("in", "SourceAlpha")
+		.attr("dx", "0")
+		.attr("dy", "0");
+
+	filter.append("feGaussianBlur")
+		.attr("result", "blurOut")
+		.attr("in", "offOut")
+		.attr("stdDeviation", "3");
+
+	filter.append("feBlend")
+		.attr("in", "SourceGraphic")
+		.attr("in2", "blurOut")
+		.attr("mode", "normal");
 
 root = treeData[0];
 root.x0 = 0;
@@ -79,13 +104,15 @@ function update(source) {
 	  .attr("class", "node")
 	  .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
 	  .on("click", click);
-	 	
+	 
 	 nodeEnter.append("image")
       .attr("xlink:href", function(d) { return d.icon; })
       .attr("x", "-50px")
       .attr("y", "-50px")
       .attr("width", "100px")
       .attr("height", "100px");
+
+
 
 	 nodeEnter.append("text")
 	  .attr("x", 0)
@@ -111,9 +138,11 @@ function update(source) {
 			var tempID = d3.select(node[0][i]).datum().id;
 	  		var currentID = currentNode["id"];
 	  		if (tempID==currentID) {
-	  			d3.select(node[0][i]).select("text").attr("fill","red");
+	  			d3.select(node[0][i]).select("text").attr("fill","red").attr("class","shadow");
+	  			d3.select(node[0][i]).select("image").attr("filter", "url(#f1)");
 	  		} else {
-	  			d3.select(node[0][i]).select("text").attr("fill","black");
+	  			d3.select(node[0][i]).select("text").attr("fill","black").attr("class","no-shadow");
+	  			d3.select(node[0][i]).select("image").attr("filter", null);
 	  		}
 		}
 	} else {
@@ -184,7 +213,15 @@ function checkKey(e) {
     update(svg);
 }
 
+window.addEventListener("keydown", function(e) {
+    // space and arrow keys
+    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+        e.preventDefault();
+    }
+}, false);
+
 // Toggle children on click.
 function click(d) {
   update(d);
 }
+
