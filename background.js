@@ -176,8 +176,8 @@ function navigate(tabId, move) {
 
 function getTree(node, current) {
     var tree = {
-        name: node == current ? node.title : node.title.substr(0, 30) + '... ',
-        url: node == current ? node.url : node.url.substr(0, 30) + '... ',
+        name: node.title.substr(0, 30) + '... ',
+        url: node.url.substr(0, 30) + '... ',
         icon: node.icon_url ? node.icon_url : "https://www.bookmanbookstore.com/wp-content/uploads/2012/07/placeholder_2.jpg",
         current: node == current,
         children: []
