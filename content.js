@@ -35,8 +35,9 @@ document.documentElement.onkeyup = function(e) {
 };
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    console.log(message);
+    console.log(NAV);
     if (!NAV) {
-        console.log(message);
         createTree(message.tree, message.depth_of_current, message.max_depth);
         NAV = true;
     }
@@ -67,11 +68,12 @@ function createTree(treeData, depth_of_current, max_depth) {
     root = treeData;
     root.x0 = 0;
     root.y0 = height / 2.0;
+    //root.y0 = 0;
     console.log("current depth:", depth_of_current);
     console.log("max depth:", max_depth);
     document.getElementById("histree").style.zIndex = 1000;
     document.getElementById("histree").style.visibility = "visible";
-    var treeWidth = Math.min(width, 400);
+    var treeWidth = Math.min(width, width);
     var treeHeight = Math.min(height, height);
     tree = d3.layout.tree().size([treeWidth, treeHeight]);
     svg = d3.select("#histree").append("svg")
