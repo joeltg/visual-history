@@ -177,12 +177,12 @@ function navigate(tabId, move) {
 function getTree(node, current) {
     var tree = {
         name: node == current ? node.title : node.title.substr(0, 30) + '... ',
-        url: node == current ? node.url : node.url.substr(0, 40) + '... ',
-        icon: node.icon_url ? node.icon_url : "http://blogs.gcu.edu/colangelo-college-of-business/wp-content/themes/gcublogs/img/default-placeholder.png",
+        url: node == current ? node.url : node.url.substr(0, 30) + '... ',
+        icon: node.icon_url ? node.icon_url : "https://www.bookmanbookstore.com/wp-content/uploads/2012/07/placeholder_2.jpg",
         current: node == current,
         children: []
     };
-    for (var i = 0; i < node.children.length; i++) tree.children.push(getTree(node.children[i]));
+    for (var i = 0; i < node.children.length; i++) tree.children.push(getTree(node.children[i], current));
     return tree;
 }
 

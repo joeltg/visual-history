@@ -26,7 +26,6 @@ var CTRL = false;
 var NAV = false;
 
 document.documentElement.onkeyup = function(e) {
-    console.log(e.keyIdentifier);
     if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "U+00A3" || e.keyIdentifier == "Meta") {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
@@ -37,6 +36,7 @@ document.documentElement.onkeyup = function(e) {
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (!NAV) {
+        console.log(message);
         createTree(message.tree, message.depth_of_current, message.max_depth);
         NAV = true;
     }
