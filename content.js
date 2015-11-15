@@ -15,27 +15,29 @@ margin = parseInt(margin.substr(0, 1));
 var CTRL = false;
 var NAV = false;
 
+/*
 document.documentElement.onkeydown = function(e) {
-    if (CTRL && (e.keyIdentifier == "Up" || e.keyIdentifier == "Down" || e.keyIdentifier == "Left" || e.keyIdentifier == "Right")) {
-        console.log("checking for nav");
-        if (!NAV) {
-            NAV = true;
-            console.log('creating tree');
-            createTree();
+    if (e.keyIdentifier == "Up" || e.keyIdentifier == "Down" || e.keyIdentifier == "Left" || e.keyIdentifier == "Right") {
+        console.log('got arrow key');
+        if (CTRL) {
+            console.log("checking for nav");
+            if (!NAV) {
+                NAV = true;
+                console.log('creating tree');
+                createTree();
+            }
+            checkKey(e);
         }
-        checkKey(e);
-        chrome.runtime.sendMessage({key: e.keyIdentifier.toLowerCase()}, function() {});
     }
     else if (e.keyIdentifier == 'U+00A2') {
-        console.log('ctrl down');
         NAV = false;
         CTRL = true;
     }
 };
+*/
 
 document.documentElement.onkeyup = function(e) {
     if (e.keyIdentifier == "U+00A2") {
-        console.log('ctrl up');
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
         NAV = false;
@@ -43,6 +45,17 @@ document.documentElement.onkeyup = function(e) {
     }
 };
 
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    console.log(message);
+    if (!NAV) {
+        createTree();
+        NAV = true;
+    }
+    if (message == 'up') up();
+    else if (message == 'down') down();
+    else if (message == 'left') left();
+    else if (message == 'right') right();
+});
 
 
 var treeData = [
@@ -195,42 +208,57 @@ function update(source) {
     });
 }
 
+document.documentElement.onkeydown = checkKey;
+createTree();
 //Handle keyboard events
 function checkKey(e) {
     if (!NAV) return;
     e = e || window.event;
 
-    if (e.keyCode == '38') { //up
-        if (currentNode.parent) {
-            currentNode = currentNode.parent;
-        }
-    } else if (e.keyCode == '40') { //down
-        if (currentNode.children) {
-            var last = currentNode.children.length-1;
-            currentNode = currentNode.children[last]
-        }
-    } else if (e.keyCode == '37') { //left
-        if (currentNode.parent) {
-            var sisNodes = currentNode.parent.children;
-            var index = sisNodes.indexOf(currentNode);
-            if (index!=0) {
-                currentNode = sisNodes[index-1]
-            }
-        }
-    } else if (e.keyCode == '39') { //right
-        if (currentNode.parent) {
-            var sisNodes = currentNode.parent.children;
-            var index = sisNodes.indexOf(currentNode);
-            if (index!=sisNodes.length-1) {
-                currentNode = sisNodes[index+1]
-            }
+    if (e.keyCode == '38') up();
+    else if (e.keyCode == '40') down();
+    else if (e.keyCode == '37') left();
+    else if (e.keyCode == '39') right();
+
+    console.log(currentNode.id);
+    //console.log(d3.select(currentNode))
+}
+
+function up() {
+    if (currentNode.parent) {
+        currentNode = currentNode.parent;
+        update(svg);
+    }
+}
+
+function down() {
+    if (currentNode.children) {
+        var last = currentNode.children.length-1;
+        currentNode = currentNode.children[last];
+        update(svg);
+    }
+}
+
+function left() {
+    if (currentNode.parent) {
+        var sisNodes = currentNode.parent.children;
+        var index = sisNodes.indexOf(currentNode);
+        if (index!=0) {
+            currentNode = sisNodes[index-1];
+            update(svg);
         }
     }
-    update(svg);
+}
 
-    console.log(currentNode.id)
-    //console.log(d3.select(currentNode))
-
+function right() {
+    if (currentNode.parent) {
+        var sisNodes = currentNode.parent.children;
+        var index = sisNodes.indexOf(currentNode);
+        if (index!=sisNodes.length-1) {
+            currentNode = sisNodes[index+1];
+            update(svg);
+        }
+    }
 }
 
 // Toggle children on click.

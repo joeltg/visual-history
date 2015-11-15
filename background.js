@@ -2,14 +2,15 @@ var DEPTH_LIMIT = 10;
 var DEPTH = 0;
 var IMAGES = false;
 
-var Node = function(url) {
+var Node = function(url, icon_url) {
     this.parent = null;
     this.depth = 0;
     this.url = url;
+    this.icon_url = icon_url;
     this.image = null;
     this.children = [];
-    this.insert = function(url) {
-        var node = new Node(url);
+    this.insert = function(url, icon_url) {
+        var node = new Node(url, icon_url);
         node.depth = this.depth + 1;
         node.parent = this;
         this.children.push(node);
@@ -22,10 +23,6 @@ var tabs = {};
 
 chrome.runtime.onMessage.addListener(function(message, sender) {
     if (message.key == 'ctrl') exitNavigation(sender.tab.id);
-    else if (message.key == 'up') up(sender.tab.id);
-    else if (message.key == 'down') down(sender.tab.id);
-    else if (message.key == 'left') left(sender.tab.id);
-    else if (message.key == 'right') right(sender.tab.id);
 });
 
 
@@ -35,7 +32,9 @@ chrome.commands.onCommand.addListener(function(command) {
     else if (command == 'move-down') fun = down;
     else if (command == 'move-left') fun = left;
     else if (command == 'move-right') fun = right;
-    chrome.tabs.query({active:true,windowType:"normal",currentWindow:true},function(d){enterNavigation(d[0].id, fun);});
+    chrome.tabs.query({active:true,windowType:"normal",currentWindow:true},function(d){
+        navigate(d[0].id, fun);
+    });
 });
 
 
@@ -46,8 +45,11 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
 
 chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
     navigateTo(removedTabId, tabs[addedTabId].url);
-    delete tabs[addedTabId];
-    printTab(removedTabId);
+
+    tabs[addedTabId] = tabs[removedTabId];
+
+    delete tabs[removedTabId];
+    printTab(addedTabId);
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
@@ -82,25 +84,36 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
             return;
     }
     if (tabs[details.tabId] && tabs[details.tabId].override) tabs[details.tabId].override = false;
-    else navigateTo(details.tabId, details.url);
+    else {
+        navigateTo(details.tabId, details.url);
+    }
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
     if (tabs[details.tabId]) {
         if (tabs[details.tabId].current.url == details.url) {
-            takeScreenshot(tabs[details.tabId].current);
+            chrome.tabs.get(details.tabId, function(tab) {
+                if (chrome.runtime.lastError) {
+                    console.log(chrome.runtime.lastError.message);
+                } else {
+                    tabs[details.tabId].current.icon_url = tab.favIconUrl;
+                    tabs[details.tabId].current.title = tab.title;
+                    console.log(tab.title);
+                }
+            });
+            //takeScreenshot(tabs[details.tabId].current);
         }
     }
 });
 
-function navigateTo(tabId, url, title) {
+function navigateTo(tabId, url, icon_url) {
     if (tabs[tabId]) {
         // tabId in tabs
-        tabs[tabId].current = tabs[tabId].current.insert(url, title);
+        tabs[tabId].current = tabs[tabId].current.insert(url, icon_url);
     }
     else {
         // tabId not in tabs
-        var node = new Node(url, title);
+        var node = new Node(url, icon_url);
         node.current = node;
         tabs[tabId] = node;
     }
@@ -108,7 +121,6 @@ function navigateTo(tabId, url, title) {
 }
 
 function takeScreenshot(node) {
-    /*
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
         if (dataUrl) {
             node.image = dataUrl;
@@ -116,19 +128,20 @@ function takeScreenshot(node) {
             //saveImage(dataUrl);
         }
     });
-    */
 }
 
 function up(tab) {
     if (tabs[tab] && tabs[tab].current.parent)
         tabs[tab].current = tabs[tab].current.parent;
     printTab(tab);
+    return 'up';
 }
 
 function down(tab) {
     if (tabs[tab] && tabs[tab].current.children.length > 0)
         tabs[tab].current = tabs[tab].current.children[tabs[tab].current.children.length - 1];
     printTab(tab);
+    return 'down';
 }
 
 function left(tab) {
@@ -138,6 +151,7 @@ function left(tab) {
             tabs[tab].current = tabs[tab].current.parent.children[index - 1];
     }
     printTab(tab);
+    return 'left';
 }
 
 function right(tab) {
@@ -147,10 +161,12 @@ function right(tab) {
             tabs[tab].current = tabs[tab].current.parent.children[index + 1];
     }
     printTab(tab);
+    return 'right';
 }
 
-function enterNavigation(tabId, firstMove) {
-    firstMove(tabId);
+function navigate(tabId, move) {
+    var m = move(tabId);
+    chrome.tabs.sendMessage(tabId, {move: m}, function() {});
 }
 
 function exitNavigation(tabId) {
