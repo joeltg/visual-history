@@ -99,10 +99,10 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                 } else {
                     tabs[details.tabId].current.icon_url = tab.favIconUrl;
                     tabs[details.tabId].current.title = tab.title;
+                    takeScreenshot(tabs[details.tabId].current);
                     console.log(tab.title);
                 }
             });
-            //takeScreenshot(tabs[details.tabId].current);
         }
     }
 });
@@ -182,6 +182,7 @@ function getTree(node, current) {
         current: node == current,
         children: []
     };
+    if (node.image) tree.icon = node.image;
     for (var i = 0; i < node.children.length; i++) tree.children.push(getTree(node.children[i], current));
     return tree;
 }
