@@ -24,7 +24,7 @@ body {
 }
 
 /*CSS3 Fade In Transformation*/
-.animated { 
+.animated {
     -webkit-animation-duration: 0.5s; 
     animation-duration: 0.5s; 
     -webkit-animation-fill-mode: both; 
@@ -33,15 +33,15 @@ body {
     animation-timing-function: ease-out; 
 } 
 
-@-webkit-keyframes fadeIn { 
+@-webkit-keyframes fadeIn {
     0% {opacity: 0;} 
     100% {opacity: 1;} 
 } 
-@keyframes fadeIn { 
+@keyframes fadeIn {
     0% {opacity: 0;} 
     100% {opacity: 1;} 
 } 
-.fadeIn { 
+.fadeIn {
     -webkit-animation-name: fadeIn; 
     animation-name: fadeIn; 
 }

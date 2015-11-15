@@ -19,6 +19,7 @@
       "js": ["D3/d3.min.js", "content.js"]
     }
   ],
+  "web_accessible_resources": ["tree.css"],
   "commands": {
     "move-up": {
       "suggested_key": {

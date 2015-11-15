@@ -1,3 +1,12 @@
+
+var css = document.createElement('link');
+css.setAttribute("type", "text/css");
+css.setAttribute("rel", "stylesheet");
+css.setAttribute("href", chrome.extension.getURL("tree.css")); //Assuming your host supports both http and https
+var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement;
+head.insertBefore(css, head.firstChild);
+
+
 var body = document.getElementsByTagName("body")[0];
 var style = body.currentStyle || window.getComputedStyle(body);
 var margin = style.margin;
@@ -14,27 +23,6 @@ margin = parseInt(margin.substr(0, 1));
 
 var CTRL = false;
 var NAV = false;
-
-/*
-document.documentElement.onkeydown = function(e) {
-    if (e.keyIdentifier == "Up" || e.keyIdentifier == "Down" || e.keyIdentifier == "Left" || e.keyIdentifier == "Right") {
-        console.log('got arrow key');
-        if (CTRL) {
-            console.log("checking for nav");
-            if (!NAV) {
-                NAV = true;
-                console.log('creating tree');
-                createTree();
-            }
-            checkKey(e);
-        }
-    }
-    else if (e.keyIdentifier == 'U+00A2') {
-        NAV = false;
-        CTRL = true;
-    }
-};
-*/
 
 document.documentElement.onkeyup = function(e) {
     if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "Meta") {
@@ -57,21 +45,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     else if (message.move == 'right') right();
 });
 
-/*
-var treeData = [
-    {"name": "Hacker News",
-        "url": "news.yc",
-        "icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif",
-        "children": [
-            {"name": "GRASP","icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif", "children": [
-                {"name": "JG Wikipedia", "icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif"},
-                {"name": "GRAIL", "icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif"}
-            ]},
-            {"name": "Xanadu 2.0", "icon": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Y_Combinator_Logo_400.gif"}
-        ]}
-];
-*/
-
 //Selecting last element in array
 if (!Array.prototype.last){
     Array.prototype.last = function(){
@@ -82,7 +55,7 @@ if (!Array.prototype.last){
 // ************** Generate the tree diagram	 *****************
 
 var i = 0,
-    duration = 750,
+    duration = 5,
     root;
 
 
@@ -101,13 +74,41 @@ function createTree(treeData) {
     svg = d3.select("#histree").append("svg")
         .attr("width", width)
         .attr("height", height)
+        .attr("class", "animated fadeIn")
         .append("g")
-        .attr("transform", "translate(" + String((width - treeWidth) / 2.0) + "," + String(50) + ")");
+        .attr("transform", "translate(" + String((width - treeWidth) / 2.0) + ", 50)");
+
+    var defs = svg.append("defs");
+
+    var filter = defs.append("filter")
+        .attr("id", "f1")
+        .attr("x", "0")
+        .attr("y", "0")
+        .attr("width", "500%")
+        .attr("height", "500%");
+
+    filter.append("feOffset")
+        .attr("result", "offOut")
+        .attr("in", "SourceAlpha")
+        .attr("dx", "0")
+        .attr("dy", "0");
+
+    filter.append("feGaussianBlur")
+        .attr("result", "blurOut")
+        .attr("in", "offOut")
+        .attr("stdDeviation", "3");
+
+    filter.append("feBlend")
+        .attr("in", "SourceGraphic")
+        .attr("in2", "blurOut")
+        .attr("mode", "normal");
+
     update(root);
     currentNode = tree.nodes(root)[0];
     while (currentNode.children) {
         currentNode = currentNode.children.last();
     }
+
 }
 
 function removeTree() {
@@ -161,7 +162,7 @@ function update(source) {
         .attr("x", 0)
         .attr("dy", "5.5em")
         .attr("text-anchor", "middle")
-        .text(function(d) { return d.url; })
+        .text(function(d) { return d.url; });
 
     // Transition nodes to their new position.
     var nodeUpdate = node.transition()
@@ -173,10 +174,11 @@ function update(source) {
             var tempID = d3.select(node[0][i]).datum().id;
             var currentID = currentNode["id"];
             if (tempID==currentID) {
-                console.log("Yeppers!!!!");
-                d3.select(node[0][i]).select("text").attr("fill","red");
+                d3.select(node[0][i]).select("text").attr("fill","red").attr("class","shadow");
+                d3.select(node[0][i]).select("image").attr("filter", "url(#f1)");
             } else {
-                d3.select(node[0][i]).select("text").attr("fill","black");
+                d3.select(node[0][i]).select("text").attr("fill","black").attr("class","no-shadow");
+                d3.select(node[0][i]).select("image").attr("filter", null);
             }
         }
     } else {
@@ -205,30 +207,13 @@ function update(source) {
         .attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y+75; })
         .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y-40; })
+        .attr("y2", function(d) { return d.target.y-40; });
 
     // Stash the old positions for transition.
     nodes.forEach(function(d) {
         d.x0 = d.x;
         d.y0 = d.y;
     });
-}
-
-//document.documentElement.onkeydown = checkKey;
-//createTree();
-
-//Handle keyboard events
-function checkKey(e) {
-    if (!NAV) return;
-    e = e || window.event;
-
-    if (e.keyCode == '38') up();
-    else if (e.keyCode == '40') down();
-    else if (e.keyCode == '37') left();
-    else if (e.keyCode == '39') right();
-
-    console.log(currentNode.id);
-    //console.log(d3.select(currentNode))
 }
 
 function up() {
