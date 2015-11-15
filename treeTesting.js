@@ -1,13 +1,15 @@
+//JS written by Kenneth Friedman and Joel Gustafson
+
 var treeData = [
 	{"name": "Hacker News",
 	 "url": "news.yc",
 	 "icon": "testShot.png",
 	 "children": [
-		{"name": "GRASP","icon": "testShot.png", "children": [
-			{"name": "JG Wikipedia", "icon": "testShot.png"},
-			{"name": "GRAIL", "icon": "testShot.png"}
+		{"name": "GRASP","icon": "testShot.png", "url": "news.yc", "children": [
+			{"name": "JG Wikipedia", "url": "news.yc", "icon": "testShot.png"},
+			{"name": "GRAIL","url": "news.yc", "icon": "testShot.png"}
         ]},
-        {"name": "Xanadu 2.0", "icon": "testShot.png"}
+        {"name": "Xanadu 2.0","url": "news.yc", "icon": "testShot.png"}
         ]}
 ];
 
@@ -55,20 +57,6 @@ while (currentNode.children) {
 	currentNode = currentNode.children.last();
 }
 
-
-//var ssNode = svg.select();
-//var ssNode = svg.selectAll(currentNode.name);
-  //console.log("SS: "+ ssNode);
-  //currentNode.style("color", "red");
-  //currentNode.style({stroke: "red", "stroke-width": "2px"});
-/*
-  console.log(currentNode);
-  var finderText = "g.node."+currentNode.name;
-  console.log(finderText);
-  d3.select(finderText).style("stroke","red");
-*/
-
-
 function update(source) {
 
   // Compute the new tree layout.
@@ -77,12 +65,7 @@ function update(source) {
 
   // Normalize for fixed-depth.
   nodes.forEach(function(d) { d.y = d.depth * 180; });
-  
-  nodes.forEach(function(d) {
-	  if (d == currentNode) {
-		  d.attr("color", "red");
-	  }
-	});
+
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -109,10 +92,31 @@ function update(source) {
 	  .style("fill-opacity", 1e-6)
 	  .style("font-weight", "bold");
 
+	  nodeEnter.append("text")
+	  .attr("x", 0)
+	  .attr("dy", "5.5em")
+	  .attr("text-anchor", "middle")
+	  .text(function(d) { return d.url; })
+
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
 	  .duration(duration)
 	  .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+	if (currentNode) {
+		for(i=0; i<node[0].length; i++) {
+			var tempID = d3.select(node[0][i]).datum().id;
+	  		var currentID = currentNode["id"];
+	  		if (tempID==currentID) {
+	  			console.log("Yeppers!!!!");
+	  			d3.select(node[0][i]).select("text").attr("fill","red");
+	  		} else {
+	  			d3.select(node[0][i]).select("text").attr("fill","black");
+	  		}
+		}
+	} else {
+		console.log("There is no currentNode available");
+	}
 
   nodeUpdate.select("text")
 	  .style("fill-opacity", 1);
@@ -134,7 +138,7 @@ function update(source) {
 link.enter().append("line")
     .attr("class", "link")
     .attr("x1", function(d) { return d.source.x; })
-    .attr("y1", function(d) { return d.source.y+60; })
+    .attr("y1", function(d) { return d.source.y+75; })
     .attr("x2", function(d) { return d.target.x; })
     .attr("y2", function(d) { return d.target.y-40; })
 
@@ -176,6 +180,10 @@ function checkKey(e) {
 	    }
     }
     update(svg);
+
+    console.log(currentNode.id)
+    //console.log(d3.select(currentNode))
+
 }
 
 // Toggle children on click.
