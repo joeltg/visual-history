@@ -19,13 +19,13 @@ d.setAttribute("style", "padding: 0; margin: " + margin +
     "; position: absolute; top: 0; bottom: 0; left: 0; right: 0;");
 body.insertBefore(d, body.firstChild);
 d.style.zIndex = -1;
+d.style.visibility = 'hidden';
 margin = parseInt(margin.substr(0, 1));
 
 var CTRL = false;
 var NAV = false;
 
 document.documentElement.onkeyup = function(e) {
-    console.log(e.keyIdentifier);
     if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "U+00A3" || e.keyIdentifier == "Meta") {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
@@ -36,8 +36,9 @@ document.documentElement.onkeyup = function(e) {
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     console.log(message);
+    console.log(NAV);
     if (!NAV) {
-        createTree(message.tree);
+        createTree(message.tree, message.depth_of_current, message.max_depth);
         NAV = true;
     }
     if (message.move == 'up') up();
@@ -63,13 +64,16 @@ var i = 0,
 
 var tree, svg, currentNode;
 
-function createTree(treeData) {
+function createTree(treeData, depth_of_current, max_depth) {
     root = treeData;
     root.x0 = 0;
-    root.y0 = height / 2;
-
+    root.y0 = height / 2.0;
+    //root.y0 = 0;
+    console.log("current depth:", depth_of_current);
+    console.log("max depth:", max_depth);
     document.getElementById("histree").style.zIndex = 1000;
-    var treeWidth = Math.min(width, 400);
+    document.getElementById("histree").style.visibility = "visible";
+    var treeWidth = Math.min(width, width);
     var treeHeight = Math.min(height, height);
     tree = d3.layout.tree().size([treeWidth, treeHeight]);
     svg = d3.select("#histree").append("svg")
@@ -106,14 +110,26 @@ function createTree(treeData) {
 
     update(root);
     currentNode = tree.nodes(root)[0];
+    var current = findCurrent(currentNode);
+    if (current) return;
     while (currentNode.children) {
         currentNode = currentNode.children.last();
     }
+}
 
+function findCurrent(node) {
+    if (node.current) return node;
+    console.log(node.current);
+    if (node.children) for (var i = 0; i < node.children.length; i++) {
+        var current = findCurrent(node.children[i]);
+        if (current) return current;
+    }
+    return false;
 }
 
 function removeTree() {
     document.getElementById("histree").style.zIndex = -1;
+    document.getElementById("histree").style.visibility = "hidden";
     if (svg) svg.remove();
     svg = null;
     tree = null;
