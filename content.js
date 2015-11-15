@@ -256,5 +256,7 @@ function right() {
 
 // Toggle children on click.
 function click(d) {
+    console.log(d);
     update(d);
+    if (d.url) location.href = d.url;
 }
