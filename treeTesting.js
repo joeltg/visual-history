@@ -30,7 +30,7 @@ var margin = {top: 20, right: 120, bottom: 20, left: 120},
 	height = 500 - margin.top - margin.bottom;
 	
 var i = 0,
-	duration = 750,
+	duration = 5,
 	root;
 
 var tree = d3.layout.tree()
@@ -108,7 +108,6 @@ function update(source) {
 			var tempID = d3.select(node[0][i]).datum().id;
 	  		var currentID = currentNode["id"];
 	  		if (tempID==currentID) {
-	  			console.log("Yeppers!!!!");
 	  			d3.select(node[0][i]).select("text").attr("fill","red");
 	  		} else {
 	  			d3.select(node[0][i]).select("text").attr("fill","black");
@@ -180,10 +179,6 @@ function checkKey(e) {
 	    }
     }
     update(svg);
-
-    console.log(currentNode.id)
-    //console.log(d3.select(currentNode))
-
 }
 
 // Toggle children on click.
