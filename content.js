@@ -37,8 +37,7 @@ document.documentElement.onkeydown = function(e) {
 */
 
 document.documentElement.onkeyup = function(e) {
-    console.log(e.keyIdentifier);
-    if (e.keyIdentifier == "U+00A2") {
+    if (e.keyIdentifier == "U+00A2" || e.keyIdentifier == "Meta") {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
         NAV = false;
