@@ -99,7 +99,7 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                 } else {
                     tabs[details.tabId].current.icon_url = tab.favIconUrl;
                     tabs[details.tabId].current.title = tab.title;
-                    takeScreenshot(tabs[details.tabId].current);
+                    //takeScreenshot(tabs[details.tabId].current);
                     console.log(tab.title);
                 }
             });
