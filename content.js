@@ -39,7 +39,7 @@ function makeDiv() {
 }
 
 document.documentElement.onkeyup = function(e) {
-    if (e.keyCode == "17" || e.keyIdentifier == "Meta") {
+    if ((e.keyCode == "17" || e.keyIdentifier == "Meta") && CTRL && NAV) {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
         CTRL = false;
         NAV = false;
@@ -179,7 +179,7 @@ function update(source) {
 
     for(i=0; i<node[0].length; i++) {
         if (d3.select(node[0][i]).datum().current) {
-            var color = "red";
+            var color = rgbToHex(64, 128, 192);
             var img_color = d3.select(node[0][i]).datum().img_color;
             if (img_color) color = rgbToHex(img_color[0], img_color[1], img_color[2]);
             d.scrollTop = d3.select(node[0][i]).datum().y0 - (window.height / 2.0) + 250;
