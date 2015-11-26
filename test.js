@@ -1,62 +1,121 @@
-var default_image = chrome.extension.getURL('tab.png');
-var css = document.createElement('link');
-css.setAttribute("type", "text/css");
-css.setAttribute("rel", "stylesheet");
-css.setAttribute("href", chrome.extension.getURL("tree.css")); //Assuming your host supports both http and https
-var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement;
-head.insertBefore(css, head.firstChild);
+var treeData = {
+    "name":"New Tab... ",
+    "url":"https://www.google.com/_/chrom... ",
+    "image_url":null,
+    "icon_url":"https://www.google.com/favicon.ico",
+    "img_color":[136,172,241],
+    "current":false,
+    "children":[
+        {"name":"Hacker News... ",
+            "url":"https://news.ycombinator.com/... ",
+            "image_url":null,
+            "icon_url":"https://news.ycombinator.com/favicon.ico",
+            "img_color":[252,100,4],
+            "current":false,
+            "children":[
+                {"name":"Raspberry Pi Zero: the $5 comp... ",
+                    "url":"https://news.ycombinator.com/i... ",
+                    "image_url":null,
+                    "icon_url":"https://news.ycombinator.com/favicon.ico",
+                    "img_color":[252,100,4],
+                    "current":false,
+                    "children":[]
+                },
+                {
+                    "name":"KnightOS – an open-source oper... ",
+                    "url":"https://news.ycombinator.com/i... ",
+                    "image_url":null,
+                    "icon_url":"https://news.ycombinator.com/favicon.ico",
+                    "img_color":[252,100,4],
+                    "current":false,
+                    "children":[]
+                },{
+                    "name":"How to Make a Pencil from Scra... ",
+                    "url":"https://news.ycombinator.com/i... ",
+                    "image_url":null,
+                    "icon_url":"https://news.ycombinator.com/favicon.ico",
+                    "img_color":[252,100,4],
+                    "current":false,
+                    "children":[
+                        {"name":"Cracked, inSecure and Generall... ",
+                            "url":"http://gse-compliance.blogspot... ",
+                            "image_url":null,
+                            "current":false,
+                            "children":[]
+                        },{
+                            "name":"Quote by Carl Sagan: “If you wish to make an apple pie from scratch, ...”",
+                            "url":"http://www.goodreads.com/quotes/32952-if-you-wish-to-make-an-apple-pie-from-scratch",
+                            "image_url":null,
+                            "current":true,
+                            "children":[
+                                {
+                                    "name":"How to Make a Pencil from Scra... ",
+                                    "url":"https://news.ycombinator.com/i... ",
+                                    "image_url":null,
+                                    "icon_url":"https://news.ycombinator.com/favicon.ico",
+                                    "img_color":[252,100,4],
+                                    "current":false,
+                                    "children":[
+                                        {"name":"Cracked, inSecure and Generall... ",
+                                            "url":"http://gse-compliance.blogspot... ",
+                                            "image_url":null,
+                                            "current":false,
+                                            "children":[]
+                                        },{
+                                            "name":"Quote by Carl Sagan: “If you wish to make an apple pie from scratch, ...”",
+                                            "url":"http://www.goodreads.com/quotes/32952-if-you-wish-to-make-an-apple-pie-from-scratch",
+                                            "image_url":null,
+                                            "current":false,
+                                            "children":[]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+};
 
+var default_image = 'tab.png';
 
 var body = document.getElementsByTagName("body")[0];
 var style = body.currentStyle || window.getComputedStyle(body);
-var margin = style.margin;
-var width = parseInt(style.width.substr(0, style.width.length - 2));
-var height = parseInt(style.height.substr(0, style.height.length - 2));
+var margin = parseInt(style.margin.substr(0, style.margin.length - 2));
+var width = parseInt(style.width.substr(0, style.width.length - 2)) - margin;
+var height = parseInt(style.height.substr(0, style.height.length - 2)) - margin;
 
-makeDiv();
+var d = document.createElement("div");
+d.setAttribute("id", "histree");
+d.style.padding = 0;
+d.style.margin = 0;
+d.style.position = 'absolute';
+d.style.top = 0;
+d.style.bottom = 0;
+d.style.left = 0;
+d.style.right = 0;
+body.insertBefore(d, body.firstChild);
 
-margin = parseInt(margin.substr(0, 1));
-
-var CTRL = false;
-var NAV = false;
-
-var d;
-
-function makeDiv() {
-    d = document.createElement("div");
-    d.setAttribute("id", "histree");
-    d.style.padding = 0;
-    d.style.margin = margin;
-    d.style.position = 'absolute';
-    d.style.top = 0;
-    d.style.bottom = 0;
-    d.style.left = 0;
-    d.style.right = 0;
-    d.style.zIndex = -1;
-    d.style.visibility = 'hidden';
-    body.insertBefore(d, body.firstChild);
-    return d;
-}
-
-document.documentElement.onkeyup = function(e) {
-    if (e.keyCode == "17" || e.keyIdentifier == "Meta") {
-        chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
-        CTRL = false;
-        NAV = false;
-        removeTree();
+document.documentElement.onkeydown = function(e) {
+    if (e.keyCode == 37) {
+        // left
+        left();
+    }
+    else if (e.keyCode == 38) {
+        // up
+        up();
+    }
+    else if (e.keyCode == 39) {
+        // right
+        right();
+    }
+    else if (e.keyCode == 40) {
+        // down
+        down();
     }
 };
-
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (!NAV) {
-        createTree(message.tree, message.depth_of_current, message.max_depth);
-        NAV = true;
-    }
-    else if (message.move == 'up') up();
-    else if (message.move == 'down') down();
-    else if (message.move == 'left') left();
-    else if (message.move == 'right') right();
-});
 
 // ************** Generate the tree diagram	 *****************
 
@@ -121,17 +180,6 @@ function findCurrent(node) {
     return false;
 }
 
-function removeTree() {
-    if (svg) svg.remove();
-    var d = document.getElementById("histree");
-    d.parentElement.removeChild(d);
-
-    makeDiv();
-
-    svg = null;
-    tree = null;
-}
-
 function update(source) {
     // Compute the new tree layout.
     var nodes = tree.nodes(root).reverse(),
@@ -146,8 +194,7 @@ function update(source) {
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter().append("g")
         .attr("class", "node")
-        .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-        .on("click", click);
+        .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; });
 
     nodeEnter.append("image")
         .attr("x", "-50px")
@@ -181,8 +228,8 @@ function update(source) {
         if (d3.select(node[0][i]).datum().current) {
             var color = "red";
             var img_color = d3.select(node[0][i]).datum().img_color;
-            if (img_color) color = rgbToHex(img_color[0], img_color[1], img_color[2]);
             d.scrollTop = d3.select(node[0][i]).datum().y0 - (window.height / 2.0) + 250;
+            if (img_color) color = rgbToHex(img_color[0], img_color[1], img_color[2]);
             d3.select(node[0][i]).select("text").attr("fill",color).attr("class","shadow");
             d3.select(node[0][i]).select("image").attr("filter", "url(#f1)").attr("xlink:href", function(d) {
                 if (d.image_url) return d.image_url;
@@ -279,18 +326,7 @@ function componentToHex(c) {
 }
 
 function rgbToHex(r, g, b) {
-    if (r + g + b < 32 * 3) {
-        r = 256 - r;
-        b = 256 - b;
-        g = 256 - g;
-    }
-    var hex = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-    console.log(hex);
-    return hex;
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-// Toggle children on click.
-function click(d) {
-    update(d);
-    if (d.url) location.href = d.url;
-}
+createTree(treeData, 3, 3);

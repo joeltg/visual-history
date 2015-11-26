@@ -1,6 +1,4 @@
-var DEPTH_LIMIT = 10;
-var DEPTH = 0;
-var IMAGES = false;
+var colorThief = new ColorThief();
 
 var Node = function(url, icon_url) {
     this.parent = null;
@@ -8,7 +6,8 @@ var Node = function(url, icon_url) {
     this.max_depth = 0;
     this.url = url;
     this.icon_url = icon_url;
-    this.image = null;
+    this.image_url = null;
+    this.title = null;
     this.children = [];
     this.insert = function(url, icon_url) {
         var node = new Node(url, icon_url);
@@ -19,13 +18,12 @@ var Node = function(url, icon_url) {
     };
 };
 
-
 var tabs = {};
 
 chrome.runtime.onMessage.addListener(function(message, sender) {
+    // navigate to currently selected node
     if (message.key == 'ctrl') exitNavigation(sender.tab.id);
 });
-
 
 chrome.commands.onCommand.addListener(function(command) {
     var fun;
@@ -33,11 +31,10 @@ chrome.commands.onCommand.addListener(function(command) {
     else if (command == 'move-down') fun = down;
     else if (command == 'move-left') fun = left;
     else if (command == 'move-right') fun = right;
-    chrome.tabs.query({active:true,windowType:"normal",currentWindow:true},function(d){
+    chrome.tabs.query({active: true, windowType: "normal", currentWindow: true}, function(d) {
         navigate(d[0].id, fun);
     });
 });
-
 
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
@@ -45,17 +42,31 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
 });
 
 chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
-    navigateTo(removedTabId, tabs[addedTabId].url);
-
+    onNavigateTo(removedTabId, tabs[addedTabId].url);
     tabs[addedTabId] = tabs[removedTabId];
-
     delete tabs[removedTabId];
     printTab(addedTabId);
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
     var type = details.transitionType;
-    switch (type) {
+    if (details.transitionQualifiers.indexOf("forward_back") >= 0 && tabs[details.tabId]) {
+        if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url)
+        {
+            tabs[details.tabId].current = tabs[details.tabId].current.parent;
+            return;
+        }
+        else for (var i = 0; i < tabs[details.tabId].current.children.length; i++)
+            if (tabs[details.tabId].current.children[i].url == details.url) {
+                tabs[details.tabId].current = tabs[details.tabId].current.children[i];
+                return;
+            }
+    }
+    else if (details.transitionQualifiers.indexOf("client_redirect") >= 0) {
+        tabs[details.tabId].current.url = details.url;
+        return;
+    }
+    else switch (type) {
         case 'link':
             break;
         case 'typed':
@@ -85,9 +96,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
             return;
     }
     if (tabs[details.tabId] && tabs[details.tabId].override) tabs[details.tabId].override = false;
-    else {
-        navigateTo(details.tabId, details.url);
-    }
+    else onNavigateTo(details.tabId, details.url);
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
@@ -95,19 +104,25 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
         if (tabs[details.tabId].current.url == details.url) {
             chrome.tabs.get(details.tabId, function(tab) {
                 if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError.message);
+                    //console.error(chrome.runtime.lastError.message);
                 } else {
-                    tabs[details.tabId].current.icon_url = tab.favIconUrl;
-                    tabs[details.tabId].current.title = tab.title;
-                    takeScreenshot(tabs[details.tabId].current);
-                    console.log(tab.title);
+                    var current = tabs[details.tabId].current;
+                    current.icon_url = tab.favIconUrl;
+                    current.title = tab.title;
+
+                    var img = new Image;
+                    img.onload = function(){
+                        current.img_color = colorThief.getColor(img);
+                    };
+                    img.src = tab.favIconUrl;
                 }
             });
+            // takeScreenshot(tabs[details.tabId].current);
         }
     }
 });
 
-function navigateTo(tabId, url, icon_url) {
+function onNavigateTo(tabId, url, icon_url) {
     if (tabs[tabId]) {
         // tabId in tabs
         tabs[tabId].current = tabs[tabId].current.insert(url, icon_url);
@@ -119,13 +134,12 @@ function navigateTo(tabId, url, icon_url) {
         node.current = node;
         tabs[tabId] = node;
     }
-    printTab(tabId);
 }
 
 function takeScreenshot(node) {
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
         if (dataUrl) {
-            node.image = dataUrl;
+            node.image_url = dataUrl;
             console.log(dataUrl);
             //saveImage(dataUrl);
         }
@@ -171,23 +185,30 @@ function navigate(tabId, move) {
     var tree = getTree(tabs[tabId], tabs[tabId].current);
     var depth_of_current = tabs[tabId].current.depth;
     var max_depth = tabs[tabId].max_depth;
-    chrome.tabs.sendMessage(tabId, {move: move, tree: tree, depth_of_current: depth_of_current, max_depth: max_depth}, function() {});
+    chrome.tabs.sendMessage(
+        tabId,
+        {move: move, tree: tree, depth_of_current: depth_of_current, max_depth: max_depth},
+        function() {}
+    );
 }
 
 function getTree(node, current) {
+    if (!node.title) node.title = node.url.substr(0, 30) + '... ';
     var tree = {
-        name: node.title.substr(0, 30) + '... ',
-        url: node.url.substr(0, 30) + '... ',
-        icon: node.icon_url ? node.icon_url : "https://www.bookmanbookstore.com/wp-content/uploads/2012/07/placeholder_2.jpg",
+        name: node == node.title.length > 40 ? node.title : node.title.substr(0, 30) + '... ',
+        url: node == node.url.length > 40 ? node.url : node.url.substr(0, 30) + '... ',
+        image_url: node.image_url,
+        icon_url: node.icon_url,
+        img_color: node.img_color,
         current: node == current,
         children: []
     };
-    if (node.image) tree.icon = node.image;
     for (var i = 0; i < node.children.length; i++) tree.children.push(getTree(node.children[i], current));
     return tree;
 }
 
 function exitNavigation(tabId) {
+    // navigate current tab to current url
     chrome.tabs.get(tabId, function(tab) {
         if (tab.url != tabs[tab.id].current.url) {
             tabs[tab.id].override = true;
@@ -205,11 +226,11 @@ function formatTab(tab, indent, current) {
     var base, fill;
     if (tab == current) {
         base = '1';
-        fill = Array(indent - 1).join(' ');
+        fill = new Array(indent - 1).join(' ');
     }
     else {
         base = '';
-        fill = Array(indent).join(' ');
+        fill = new Array(indent).join(' ');
     }
     console.log(base + fill + tab.url);
     for (var i = 0; i < tab.children.length; i++) {
