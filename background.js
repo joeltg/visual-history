@@ -51,8 +51,11 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
 chrome.webNavigation.onCommitted.addListener(function(details) {
     var type = details.transitionType;
     if (details.transitionQualifiers.indexOf("forward_back") >= 0 && tabs[details.tabId]) {
-        if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url)
-        {
+        if (tabs[details.tabId] && tabs[details.tabId].urls[details.url]) {
+            tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
+            return;
+        }
+        if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url) {
             tabs[details.tabId].current = tabs[details.tabId].current.parent;
             return;
         }
@@ -62,8 +65,13 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
                 return;
             }
     }
+    //else if (tabs[details.tabId] && tabs[details.tabId].urls[details.url]) {
+    //    tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
+    //    return;
+    //}
     else if (details.transitionQualifiers.indexOf("client_redirect") >= 0) {
         tabs[details.tabId].current.url = details.url;
+        tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
         return;
     }
     else switch (type) {
@@ -117,7 +125,7 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                     img.src = tab.favIconUrl;
                 }
             });
-            // takeScreenshot(tabs[details.tabId].current);
+            //takeScreenshot(tabs[details.tabId].current);
         }
     }
 });
@@ -126,12 +134,15 @@ function onNavigateTo(tabId, url, icon_url) {
     if (tabs[tabId]) {
         // tabId in tabs
         tabs[tabId].current = tabs[tabId].current.insert(url, icon_url);
+        tabs[tabId].urls[url] = tabs[tabId].current;
         tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, tabs[tabId].current.depth);
     }
     else {
         // tabId not in tabs
         var node = new Node(url, icon_url);
         node.current = node;
+        node.urls = {};
+        node.urls[url] = node;
         tabs[tabId] = node;
     }
 }
@@ -149,14 +160,12 @@ function takeScreenshot(node) {
 function up(tab) {
     if (tabs[tab] && tabs[tab].current.parent)
         tabs[tab].current = tabs[tab].current.parent;
-    printTab(tab);
     return 'up';
 }
 
 function down(tab) {
     if (tabs[tab] && tabs[tab].current.children.length > 0)
         tabs[tab].current = tabs[tab].current.children[tabs[tab].current.children.length - 1];
-    printTab(tab);
     return 'down';
 }
 
@@ -166,7 +175,6 @@ function left(tab) {
         if (index > 0)
             tabs[tab].current = tabs[tab].current.parent.children[index - 1];
     }
-    printTab(tab);
     return 'left';
 }
 
@@ -176,12 +184,12 @@ function right(tab) {
         if (index > -1 && index < tabs[tab].current.parent.children.length - 1)
             tabs[tab].current = tabs[tab].current.parent.children[index + 1];
     }
-    printTab(tab);
     return 'right';
 }
 
 function navigate(tabId, move) {
     move = move(tabId);
+    // printTab(tabId);
     var tree = getTree(tabs[tabId], tabs[tabId].current);
     var depth_of_current = tabs[tabId].current.depth;
     var max_depth = tabs[tabId].max_depth;
@@ -197,6 +205,7 @@ function getTree(node, current) {
     var tree = {
         name: node == node.title.length > 40 ? node.title : node.title.substr(0, 30) + '... ',
         url: node == node.url.length > 40 ? node.url : node.url.substr(0, 30) + '... ',
+        full_url: node.url,
         image_url: node.image_url,
         icon_url: node.icon_url,
         img_color: node.img_color,
@@ -217,8 +226,8 @@ function exitNavigation(tabId) {
     });
 }
 
-function printTab(tab) {
-    formatTab(tabs[tab], 2, tabs[tab].current);
+function printTab(tabId) {
+    formatTab(tabs[tabId], 2, tabs[tabId].current);
     console.log('');
 }
 
@@ -232,38 +241,8 @@ function formatTab(tab, indent, current) {
         base = '';
         fill = new Array(indent).join(' ');
     }
-    console.log(base + fill + tab.url);
+    console.log(base + fill + tab.url.substr(0, 50));
     for (var i = 0; i < tab.children.length; i++) {
         formatTab(tab.children[i], indent + 4, current);
     }
-}
-
-function saveImage(dataUrl) {
-    var BASE64_MARKER = ';base64,';
-    var base64Index = dataUrl.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
-    var base64 = dataUrl.substring(base64Index);
-    var raw = window.atob(base64);
-    var rawLength = raw.length;
-    var array = new Uint8Array(new ArrayBuffer(rawLength));
-
-    for (i = 0; i < rawLength; ++i) {
-        array[i] = raw.charCodeAt(i);
-    }
-    blob = new Blob([array]);
-
-    var reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onload = function (event) {
-        var save = document.createElement('a');
-        save.href = event.target.result;
-        save.target = '_blank';
-        save.download = 'pic.png' || 'unknown';
-
-        var e = document.createEvent('Event');
-        e.initEvent('click', true, true);
-        save.dispatchEvent(e);
-        (window.URL || window.webkitURL).revokeObjectURL(save.href);
-    };
-
-    fileWriter.write(blob);
 }
