@@ -65,10 +65,6 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
                 return;
             }
     }
-    //else if (tabs[details.tabId] && tabs[details.tabId].urls[details.url]) {
-    //    tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
-    //    return;
-    //}
     else if (details.transitionQualifiers.indexOf("client_redirect") >= 0) {
         tabs[details.tabId].current.url = details.url;
         tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;

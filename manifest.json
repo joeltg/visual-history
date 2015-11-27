@@ -1,8 +1,8 @@
 {
-  "name": "Histree",
+  "name": "Visual History",
   "description": "Tree-based browser history management and visualization",
-  "version": "0.1",
-  "author": "Joel Gustafson",
+  "version": "1.0.1",
+  "author": "Joel Gustafson and Kenneth Friedman",
   "permissions": [
     "tabs",
     "webNavigation",
@@ -19,31 +19,34 @@
       "js": ["D3/d3.min.js", "content.js"]
     }
   ],
+  "icons": {
+    "128": "icon.png"
+  },
   "web_accessible_resources": ["tab.png", "tree.css"],
   "commands": {
     "move-up": {
       "suggested_key": {
         "default": "Ctrl+Up"
       },
-      "description": "Toggle feature foo"
+      "description": "Navigate up the tree"
     },
     "move-down": {
       "suggested_key": {
         "default": "Ctrl+Down"
       },
-      "description": "Toggle feature foo"
+      "description": "Navigate down the tree"
     },
     "move-left": {
       "suggested_key": {
         "default": "Ctrl+Left"
       },
-      "description": "Toggle feature foo"
+      "description": "Navigate to the left in the tree"
     },
     "move-right": {
       "suggested_key": {
         "default": "Ctrl+Right"
       },
-      "description": "Toggle feature foo"
+      "description": "Navigate to the right in the tree"
     }
   },
   "manifest_version": 2
