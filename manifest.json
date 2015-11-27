@@ -1,6 +1,6 @@
 {
   "name": "Visual History",
-  "description": "Tree-based browser history management and visualization",
+  "description": "Tree-based browser history navigation and visualization",
   "version": "1.0.1",
   "author": "Joel Gustafson and Kenneth Friedman",
   "permissions": [
