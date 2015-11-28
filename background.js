@@ -20,6 +20,16 @@ var Node = function(url, icon_url) {
 
 var tabs = {};
 
+chrome.contextMenus.create(
+    {
+        title: "Push link to tree",
+        contexts: ["link"],
+        onclick: function(info, tab) {
+            if (tabs[tab.id] && info.linkUrl) tabs[tab.id].urls[info.linkUrl] = tabs[tab.id].current.insert(info.linkUrl);
+        }
+    }
+);
+
 chrome.browserAction.onClicked.addListener(function(tab) {
     navigate(tab.id, function(tabId) {
         return 'stay';
