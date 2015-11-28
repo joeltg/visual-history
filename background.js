@@ -20,6 +20,12 @@ var Node = function(url, icon_url) {
 
 var tabs = {};
 
+chrome.browserAction.onClicked.addListener(function(tab) {
+    navigate(tab.id, function(tabId) {
+        return 'stay';
+    });
+});
+
 chrome.runtime.onMessage.addListener(function(message, sender) {
     // navigate to currently selected node
     if (message.key == 'ctrl') exitNavigation(sender.tab.id);
@@ -36,7 +42,6 @@ chrome.commands.onCommand.addListener(function(command) {
     });
 });
 
-
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     delete tabs[tabId];
 });
@@ -45,27 +50,28 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
     onNavigateTo(removedTabId, tabs[addedTabId].url);
     tabs[addedTabId] = tabs[removedTabId];
     delete tabs[removedTabId];
-    printTab(addedTabId);
+    // printTab(addedTabId);
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
     var type = details.transitionType;
-    if (details.transitionQualifiers.indexOf("forward_back") >= 0 && tabs[details.tabId]) {
-        if (tabs[details.tabId] && tabs[details.tabId].urls[details.url]) {
-            tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
-            return;
-        }
+    if (tabs[details.tabId] && !tabs[details.tabId].override && tabs[details.tabId].urls[details.url]) {
+        tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
+        return;
+    }
+    else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("forward_back") >= 0) {
         if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url) {
             tabs[details.tabId].current = tabs[details.tabId].current.parent;
             return;
         }
-        else for (var i = 0; i < tabs[details.tabId].current.children.length; i++)
+        else for (var i = 0; i < tabs[details.tabId].current.children.length; i++) {
             if (tabs[details.tabId].current.children[i].url == details.url) {
                 tabs[details.tabId].current = tabs[details.tabId].current.children[i];
                 return;
             }
+        }
     }
-    else if (details.transitionQualifiers.indexOf("client_redirect") >= 0) {
+    else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("client_redirect") >= 0) {
         tabs[details.tabId].current.url = details.url;
         tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
         return;
@@ -106,10 +112,9 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 chrome.webNavigation.onCompleted.addListener(function(details) {
     if (tabs[details.tabId]) {
         if (tabs[details.tabId].current.url == details.url) {
+            tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
             chrome.tabs.get(details.tabId, function(tab) {
-                if (chrome.runtime.lastError) {
-                    //console.error(chrome.runtime.lastError.message);
-                } else {
+                if (!chrome.runtime.lastError) {
                     var current = tabs[details.tabId].current;
                     current.icon_url = tab.favIconUrl;
                     current.title = tab.title;
@@ -127,15 +132,15 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
 });
 
 function onNavigateTo(tabId, url, icon_url) {
+    var node;
     if (tabs[tabId]) {
-        // tabId in tabs
-        tabs[tabId].current = tabs[tabId].current.insert(url, icon_url);
-        tabs[tabId].urls[url] = tabs[tabId].current;
-        tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, tabs[tabId].current.depth);
+        node = tabs[tabId].current.insert(url, icon_url);
+        tabs[tabId].current = node;
+        tabs[tabId].urls[url] = node;
+        tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, node.depth);
     }
     else {
-        // tabId not in tabs
-        var node = new Node(url, icon_url);
+        node = new Node(url, icon_url);
         node.current = node;
         node.urls = {};
         node.urls[url] = node;
@@ -145,11 +150,7 @@ function onNavigateTo(tabId, url, icon_url) {
 
 function takeScreenshot(node) {
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function (dataUrl) {
-        if (dataUrl) {
-            node.image_url = dataUrl;
-            console.log(dataUrl);
-            //saveImage(dataUrl);
-        }
+        if (dataUrl) node.image_url = dataUrl;
     });
 }
 

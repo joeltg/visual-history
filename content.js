@@ -1,5 +1,5 @@
 var height_scale = 180;
-
+var old_body_style = 'auto';
 var default_image = chrome.extension.getURL('tab.png');
 var css = document.createElement('link');
 css.setAttribute("type", "text/css");
@@ -12,8 +12,8 @@ head.insertBefore(css, head.firstChild);
 var body = document.getElementsByTagName("body")[0];
 var style = body.currentStyle || window.getComputedStyle(body);
 var margin = style.margin;
-var width = parseInt(style.width.substr(0, style.width.length - 2));
-var height = parseInt(style.height.substr(0, style.height.length - 2));
+var width = window.innerWidth;
+var height = window.innerHeight;
 
 makeDiv();
 
@@ -27,14 +27,15 @@ function makeDiv() {
     d = document.createElement("div");
     d.setAttribute("id", "histree");
     d.style.padding = 0;
-    d.style.margin = margin;
-    d.style.position = 'absolute';
-    d.style.top = 0;
-    d.style.bottom = 0;
+    d.style.margin = 0;
+    d.style.position = 'fixed';
+    d.style.height = window.innerHeight;
     d.style.left = 0;
     d.style.right = 0;
+    d.style.top = 100;
     d.style.zIndex = -1;
     d.style.visibility = 'hidden';
+    d.style.overflowY = 'hidden';
     body.insertBefore(d, body.firstChild);
     return d;
 }
@@ -49,6 +50,7 @@ document.documentElement.onkeyup = function(e) {
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (!NAV) {
+        if (message.move == 'stay') document.getElementById("histree").style.overflowY = 'scroll';
         createTree(message.tree, message.depth_of_current, message.max_depth);
         NAV = true;
     }
@@ -56,6 +58,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     else if (message.move == 'down') down();
     else if (message.move == 'left') left();
     else if (message.move == 'right') right();
+    else {
+        NAV = false;
+        removeTree();
+    }
 });
 
 // ************** Generate the tree diagram	 *****************
@@ -71,9 +77,12 @@ function createTree(treeData, depth_of_current, max_depth) {
     root.x0 = 0;
     root.y0 = height / 2.0;
     //root.y0 = 0;
-
-    document.getElementById("histree").style.zIndex = 1000;
-    document.getElementById("histree").style.visibility = "visible";
+    old_body_style = document.getElementsByTagName("body")[0].style.overflowY;
+    document.getElementsByTagName("body")[0].style.overflowY = 'hidden';
+    document.getElementById("histree").style.top = document.body.scrollTop;
+    console.log(document.body.scrollTop);
+    d.style.zIndex = 1000;
+    d.style.visibility = "visible";
     height = Math.max(height, height_scale * (max_depth + 1));
     tree = d3.layout.tree().size([width, height]);
     svg = d3.select("#histree").append("svg")
@@ -122,6 +131,7 @@ function findCurrent(node) {
 }
 
 function removeTree() {
+    document.getElementsByTagName("body")[0].style.overflowY = old_body_style;
     if (svg) svg.remove();
     var d = document.getElementById("histree");
     d.parentElement.removeChild(d);
