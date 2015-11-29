@@ -63,33 +63,34 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
-    if (tabs[details.tabId]) tabs[details.tabId].processId = details.processId;
     var type = details.transitionType;
     if (tabs[details.tabId] && !tabs[details.tabId].override && tabs[details.tabId].urls[details.url]) {
+        console.log("setting current to", details.url, tabs[details.tabId].urls[details.url].url);
         tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
+        tabs[details.tabId].current.processId = details.processId;
         return;
     }
     //else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("forward_back") >= 0) {
     //    if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url) {
     //        tabs[details.tabId].current = tabs[details.tabId].current.parent;
+    //        tabs[details.tabId].current.processId = details.processId;
     //        return;
     //    }
     //    else for (var i = 0; i < tabs[details.tabId].current.children.length; i++) {
     //        if (tabs[details.tabId].current.children[i].url == details.url) {
     //            tabs[details.tabId].current = tabs[details.tabId].current.children[i];
+    //            tabs[details.tabId].current.processId = details.processId;
     //            return;
     //        }
     //    }
     //}
     else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("client_redirect") >= 0) {
         tabs[details.tabId].current.url = details.url;
+        tabs[details.tabId].current.processId = details.processId;
         tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
         return;
     }
     else {
-        if (tabs[details.tabId]) {
-            tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
-        }
         switch (type) {
             case 'link':
                 break;
@@ -104,30 +105,31 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
             case 'generated':
                 break;
             case 'auto_toplevel':
-                break;
+                return;
             case 'form_submit':
                 return;
             case 'reload':
                 return;
             case 'keyword':
-                break;
+                return;
             case 'keyword_generated':
-                break;
+                return;
         }
     }
+    if (tabs[details.tabId]) tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
     if (tabs[details.tabId] && tabs[details.tabId].override) tabs[details.tabId].override = false;
     else onNavigateTo(details.tabId, details.url, details.processId);
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
     if (tabs[details.tabId]) {
-        if (tabs[details.tabId].processId == details.processId) {
-            tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
+        if (tabs[details.tabId].current.processId == details.processId) {
+            // tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
             chrome.tabs.get(details.tabId, function(tab) {
                 if (!chrome.runtime.lastError) {
                     var current = tabs[details.tabId].current;
-                    if (tab.favIconUrl) current.icon_url = tab.favIconUrl;
-                    if (tab.title) current.title = tab.title;
+                    if (!current.icon_url) current.icon_url = tab.favIconUrl;
+                    if (!current.title) current.title = tab.title;
                     var img = new Image;
                     img.onload = function() { current.img_color = colorThief.getColor(img); };
                     img.src = tab.favIconUrl;
@@ -136,13 +138,14 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
             //takeScreenshot(tabs[details.tabId].current);
         }
     }
-    else console.log("tabId not in tabs");
 });
 
 function onNavigateTo(tabId, url, processId) {
     var node;
+    console.log("setting current to", url);
     if (tabs[tabId]) {
         node = tabs[tabId].current.insert(url);
+        node.processId = processId;
         tabs[tabId].current = node;
         tabs[tabId].urls[url] = node;
         tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, node.depth);
@@ -164,18 +167,21 @@ function takeScreenshot(node) {
 }
 
 function up(tab) {
+    console.log("setting current to");
     if (tabs[tab] && tabs[tab].current.parent)
         tabs[tab].current = tabs[tab].current.parent;
     return 'up';
 }
 
 function down(tab) {
+    console.log("setting current to");
     if (tabs[tab] && tabs[tab].current.children.length > 0)
         tabs[tab].current = tabs[tab].current.children[tabs[tab].current.children.length - 1];
     return 'down';
 }
 
 function left(tab) {
+    console.log("setting current to");
     if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
         var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
         if (index > 0)
@@ -185,6 +191,7 @@ function left(tab) {
 }
 
 function right(tab) {
+    console.log("setting current to");
     if (tabs[tab] && tabs[tab].current.parent && tabs[tab].current.parent.children.length > 1) {
         var index = tabs[tab].current.parent.children.indexOf(tabs[tab].current);
         if (index > -1 && index < tabs[tab].current.parent.children.length - 1)
