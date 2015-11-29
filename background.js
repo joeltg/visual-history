@@ -1,16 +1,15 @@
 var colorThief = new ColorThief();
 
-var Node = function(url, icon_url) {
+var Node = function(url) {
     this.parent = null;
     this.depth = 0;
     this.max_depth = 0;
     this.url = url;
-    this.icon_url = icon_url;
     this.image_url = null;
     this.title = null;
     this.children = [];
-    this.insert = function(url, icon_url) {
-        var node = new Node(url, icon_url);
+    this.insert = function(url) {
+        var node = new Node(url);
         node.depth = this.depth + 1;
         node.parent = this;
         this.children.push(node);
@@ -22,7 +21,7 @@ var tabs = {};
 
 chrome.contextMenus.create(
     {
-        title: "Push link to tree",
+        title: "Push link to tree in background",
         contexts: ["link"],
         onclick: function(info, tab) {
             if (tabs[tab.id] && info.linkUrl) tabs[tab.id].urls[info.linkUrl] = tabs[tab.id].current.insert(info.linkUrl);
@@ -64,94 +63,94 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId) {
 });
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
+    if (tabs[details.tabId]) tabs[details.tabId].processId = details.processId;
     var type = details.transitionType;
     if (tabs[details.tabId] && !tabs[details.tabId].override && tabs[details.tabId].urls[details.url]) {
         tabs[details.tabId].current = tabs[details.tabId].urls[details.url];
         return;
     }
-    else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("forward_back") >= 0) {
-        if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url) {
-            tabs[details.tabId].current = tabs[details.tabId].current.parent;
-            return;
-        }
-        else for (var i = 0; i < tabs[details.tabId].current.children.length; i++) {
-            if (tabs[details.tabId].current.children[i].url == details.url) {
-                tabs[details.tabId].current = tabs[details.tabId].current.children[i];
-                return;
-            }
-        }
-    }
+    //else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("forward_back") >= 0) {
+    //    if (tabs[details.tabId].current.parent && tabs[details.tabId].current.parent.url == details.url) {
+    //        tabs[details.tabId].current = tabs[details.tabId].current.parent;
+    //        return;
+    //    }
+    //    else for (var i = 0; i < tabs[details.tabId].current.children.length; i++) {
+    //        if (tabs[details.tabId].current.children[i].url == details.url) {
+    //            tabs[details.tabId].current = tabs[details.tabId].current.children[i];
+    //            return;
+    //        }
+    //    }
+    //}
     else if (tabs[details.tabId] && details.transitionQualifiers.indexOf("client_redirect") >= 0) {
         tabs[details.tabId].current.url = details.url;
         tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
         return;
     }
-    else switch (type) {
-        case 'link':
-            break;
-        case 'typed':
-            break;
-        case 'auto_bookmark':
-            break;
-        case 'auto_subframe':
-            // do nothing
-            return;
-        case 'manual_subframe':
-            break;
-        case 'generated':
-            break;
-        case 'auto_toplevel':
-            return;
-        case 'form_submit':
-            // do nothing? ????????????????????
-            return;
-        case 'reload':
-            // do nothing
-            return;
-        case 'keyword':
-            // do nothing? ????????????????????
-            return;
-        case 'keyword_generated':
-            // do nothing? ????????????????????
-            return;
+    else {
+        if (tabs[details.tabId]) {
+            tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
+        }
+        switch (type) {
+            case 'link':
+                break;
+            case 'typed':
+                break;
+            case 'auto_bookmark':
+                break;
+            case 'auto_subframe':
+                return;
+            case 'manual_subframe':
+                break;
+            case 'generated':
+                break;
+            case 'auto_toplevel':
+                break;
+            case 'form_submit':
+                return;
+            case 'reload':
+                return;
+            case 'keyword':
+                break;
+            case 'keyword_generated':
+                break;
+        }
     }
     if (tabs[details.tabId] && tabs[details.tabId].override) tabs[details.tabId].override = false;
-    else onNavigateTo(details.tabId, details.url);
+    else onNavigateTo(details.tabId, details.url, details.processId);
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
     if (tabs[details.tabId]) {
-        if (tabs[details.tabId].current.url == details.url) {
+        if (tabs[details.tabId].processId == details.processId) {
             tabs[details.tabId].urls[details.url] = tabs[details.tabId].current;
             chrome.tabs.get(details.tabId, function(tab) {
                 if (!chrome.runtime.lastError) {
                     var current = tabs[details.tabId].current;
-                    current.icon_url = tab.favIconUrl;
-                    current.title = tab.title;
-
+                    if (tab.favIconUrl) current.icon_url = tab.favIconUrl;
+                    if (tab.title) current.title = tab.title;
                     var img = new Image;
-                    img.onload = function(){
-                        current.img_color = colorThief.getColor(img);
-                    };
+                    img.onload = function() { current.img_color = colorThief.getColor(img); };
                     img.src = tab.favIconUrl;
                 }
             });
             //takeScreenshot(tabs[details.tabId].current);
         }
     }
+    else console.log("tabId not in tabs");
 });
 
-function onNavigateTo(tabId, url, icon_url) {
+function onNavigateTo(tabId, url, processId) {
     var node;
     if (tabs[tabId]) {
-        node = tabs[tabId].current.insert(url, icon_url);
+        node = tabs[tabId].current.insert(url);
         tabs[tabId].current = node;
         tabs[tabId].urls[url] = node;
         tabs[tabId].max_depth = Math.max(tabs[tabId].max_depth, node.depth);
     }
     else {
-        node = new Node(url, icon_url);
+        node = new Node(url);
         node.current = node;
+        node.processId = processId;
         node.urls = {};
         node.urls[url] = node;
         tabs[tabId] = node;

@@ -1,27 +1,18 @@
 var height_scale = 180;
 var old_body_style = 'auto';
 var default_image = chrome.extension.getURL('tab.png');
+var NAV = false;
+
 var css = document.createElement('link');
 css.setAttribute("type", "text/css");
 css.setAttribute("rel", "stylesheet");
-css.setAttribute("href", chrome.extension.getURL("tree.css")); //Assuming your host supports both http and https
+css.setAttribute("href", chrome.extension.getURL("tree.css"));
 var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement;
 head.insertBefore(css, head.firstChild);
 
-
 var body = document.getElementsByTagName("body")[0];
-var style = body.currentStyle || window.getComputedStyle(body);
-var margin = style.margin;
-var width = window.innerWidth;
-var height = window.innerHeight;
 
-makeDiv();
-
-margin = parseInt(margin.substr(0, 1));
-
-var NAV = false;
-
-var d;
+var d = makeDiv();
 
 function makeDiv() {
     d = document.createElement("div");
@@ -30,12 +21,16 @@ function makeDiv() {
     d.style.margin = 0;
     d.style.position = 'fixed';
     d.style.height = window.innerHeight;
+    d.style.width = window.innerWidth;
     d.style.left = 0;
     d.style.right = 0;
-    d.style.top = 100;
+    d.style.top = 0;
+    d.style.bottom = 0;
     d.style.zIndex = -1;
     d.style.visibility = 'hidden';
     d.style.overflowY = 'hidden';
+    d.style.overflowX = 'hidden';
+    d.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
     body.insertBefore(d, body.firstChild);
     return d;
 }
@@ -43,14 +38,13 @@ function makeDiv() {
 document.documentElement.onkeyup = function(e) {
     if ((e.keyCode == "17" || e.keyIdentifier == "Meta") && NAV) {
         chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
-        NAV = false;
         removeTree();
     }
 };
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (!NAV) {
-        if (message.move == 'stay') document.getElementById("histree").style.overflowY = 'scroll';
+        if (message.move == 'stay') d.style.overflowY = 'scroll';
         createTree(message.tree, message.depth_of_current, message.max_depth);
         NAV = true;
     }
@@ -58,16 +52,13 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     else if (message.move == 'down') down();
     else if (message.move == 'left') left();
     else if (message.move == 'right') right();
-    else {
-        NAV = false;
-        removeTree();
-    }
+    else removeTree();
 });
 
 // ************** Generate the tree diagram	 *****************
 
 var i = 0,
-    duration = 5,
+    duration = 1,
     root;
 
 var tree, svg, currentNode;
@@ -75,20 +66,17 @@ var tree, svg, currentNode;
 function createTree(treeData, depth_of_current, max_depth) {
     root = treeData;
     root.x0 = 0;
-    root.y0 = height / 2.0;
-    //root.y0 = 0;
-    old_body_style = document.getElementsByTagName("body")[0].style.overflowY;
-    document.getElementsByTagName("body")[0].style.overflowY = 'hidden';
-    document.getElementById("histree").style.top = document.body.scrollTop;
-    console.log(document.body.scrollTop);
+    root.y0 = 0;
+    old_body_style = body.style.overflowY;
+    body.style.overflowY = 'hidden';
     d.style.zIndex = 1000;
     d.style.visibility = "visible";
-    height = Math.max(height, height_scale * (max_depth + 1));
-    tree = d3.layout.tree().size([width, height]);
+    var height =  height_scale * (max_depth + 1);
+    tree = d3.layout.tree().size([window.innerWidth, height]);
     svg = d3.select("#histree").append("svg")
-        .attr("width", width)
+        .attr("width", window.innerWidth)
         .attr("height", height)
-        .attr("class", "animated fadeIn")
+        .attr("class", "histree-animated histree-fadeIn")
         .append("g")
         .attr("transform", "translate(0, 50)");
 
@@ -116,9 +104,9 @@ function createTree(treeData, depth_of_current, max_depth) {
         .attr("in", "SourceGraphic")
         .attr("in2", "blurOut")
         .attr("mode", "normal");
-
     currentNode = findCurrent(root);
     update(root);
+    d.scrollTop = (depth_of_current * 180) - (window.innerHeight / 2.0);
 }
 
 function findCurrent(node) {
@@ -133,11 +121,10 @@ function findCurrent(node) {
 function removeTree() {
     document.getElementsByTagName("body")[0].style.overflowY = old_body_style;
     if (svg) svg.remove();
-    var d = document.getElementById("histree");
     d.parentElement.removeChild(d);
-
+    d = null;
     makeDiv();
-
+    NAV = false;
     svg = null;
     tree = null;
 }
@@ -151,11 +138,11 @@ function update(source) {
     nodes.forEach(function(d) { d.y = d.depth * height_scale; });
 
     // Update the nodes…
-    var node = svg.selectAll("g.node").data(nodes, function(d) { return d.id || (d.id = ++i); });
+    var node = svg.selectAll("g.histree-node").data(nodes, function(d) { return d.id || (d.id = ++i); });
 
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter().append("g")
-        .attr("class", "node")
+        .attr("class", "histree-node")
         .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
         .on("click", click);
 
@@ -193,14 +180,14 @@ function update(source) {
             var img_color = d3.select(node[0][i]).datum().img_color;
             if (img_color) color = rgbToHex(img_color[0], img_color[1], img_color[2]);
             d.scrollTop = d3.select(node[0][i]).datum().y0 - (window.innerHeight / 2.0);
-            d3.select(node[0][i]).select("text").attr("fill",color).attr("class","shadow");
+            d3.select(node[0][i]).select("text").attr("fill",color).attr("class","histree-shadow");
             d3.select(node[0][i]).select("image").attr("filter", "url(#f1)").attr("xlink:href", function(d) {
                 if (d.image_url) return d.image_url;
                 if (d.icon_url) return d.icon_url;
                 return default_image;
             });
         } else {
-            d3.select(node[0][i]).select("text").attr("fill","black").attr("class","no-shadow");
+            d3.select(node[0][i]).select("text").attr("fill","black").attr("class","histree-no-shadow");
             d3.select(node[0][i]).select("image").attr("filter", null).attr("xlink:href", function(d) {
                 return d.icon_url ? d.icon_url : default_image;
             });
@@ -225,7 +212,7 @@ function update(source) {
 
     //draw lines from below text to above image
     link.enter().append("line")
-        .attr("class", "link")
+        .attr("class", "histree-link")
         .attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y+75; })
         .attr("x2", function(d) { return d.target.x; })
@@ -299,8 +286,15 @@ function rgbToHex(r, g, b) {
 
 // Navigate to nodes on click.
 function click(d) {
-    d.current = true;
-    currentNode = d;
-    update(d);
-    if (d.full_url) location.href = d.full_url;
+    if (!d) return;
+    if (d.current) removeTree();
+    else {
+        d.current = true;
+        currentNode = d;
+        if (d.full_url) location.href = d.full_url;
+        else {
+            chrome.runtime.sendMessage({key: 'ctrl'}, function() {});
+            removeTree();
+        }
+    }
 }
