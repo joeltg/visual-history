@@ -18,7 +18,7 @@ Routes that normally have to be manually re-traced by users, like jumping betwee
 
 ## Usage
 
-Navigate around the graph using Ctrl + arrow key shortcuts. Whatever node is selected when Ctrl is released will be navigated to.
+Navigate around the graph by clicking the graph icon in the toolbar, or by using Ctrl + arrow key shortcuts. Whatever node is selected when Ctrl is released will be navigated to.
 
 ## Credits
  - [D3.js](http://d3js.org/)
