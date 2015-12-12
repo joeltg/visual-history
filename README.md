@@ -8,7 +8,7 @@ Visual History is a Chrome extension that delinearizes your browsing history wit
 
 ![](/screenshots/1.png)
 
-![https://xkcd.com/214/](http://imgs.xkcd.com/comics/the_problem_with_wikipedia.png)
+[This solves and ancient problem with Wikipedia](https://xkcd.com/214/)
 
 ![](/screenshots/3.png)
 
