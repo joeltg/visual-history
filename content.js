@@ -10,6 +10,9 @@ css.setAttribute("href", chrome.extension.getURL("tree.css"));
 var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement;
 head.insertBefore(css, head.firstChild);
 
+if (document.getElementById('install-histree-button'))
+    document.getElementById('install-histree-button').innerHTML = 'View in Chrome Web Store';
+
 var body = document.getElementsByTagName("body")[0];
 var d = makeDiv();
 
