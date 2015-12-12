@@ -6,6 +6,8 @@ Visual History is a Chrome extension that delinearizes your browsing history wit
 
 ![](/screenshots/0.png)
 
+Trees are local to each tab, and are deleted once the tab is closed.
+
 ![](/screenshots/1.png)
 
 [This solves an ancient problem with Wikipedia](https://xkcd.com/214/)
