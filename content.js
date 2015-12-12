@@ -106,7 +106,7 @@ function createTree(treeData, depth_of_current, max_depth) {
         .attr("mode", "normal");
     currentNode = findCurrent(root);
     update(root);
-    d.scrollTop = (depth_of_current * 180) - (window.innerHeight / 2.0);
+    d.scrollTop = (depth_of_current * height_scale) - (window.innerHeight / 2.0);
 }
 
 function findCurrent(node) {
@@ -143,7 +143,7 @@ function update(source) {
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter().append("g")
         .attr("class", "histree-node")
-        .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+        .attr("transform", function() { return "translate(" + source.y0 + "," + source.x0 + ")"; })
         .on("click", click);
 
     nodeEnter.append("image")
@@ -171,7 +171,7 @@ function update(source) {
 
     // Transition nodes to their new position.
     var nodeUpdate = node.transition()
-        .duration(duration)
+        .duration(0)
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
     for(i=0; i<node[0].length; i++) {
