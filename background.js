@@ -15,6 +15,7 @@ var Node = function(url) {
         this.children.push(node);
         return node;
     };
+    this.current = this;
 };
 
 var tabs = {};
@@ -24,7 +25,10 @@ chrome.contextMenus.create(
         title: "Push link to tree in background",
         contexts: ["link"],
         onclick: function(info, tab) {
-            if (tabs[tab.id] && info.linkUrl) tabs[tab.id].urls[info.linkUrl] = tabs[tab.id].current.insert(info.linkUrl);
+            if (tabs[tab.id] && info.linkUrl) {
+                tabs[tab.id].urls[info.linkUrl] = tabs[tab.id].current.insert(info.linkUrl);
+                tabs[tab.id].max_depth = Math.max(tabs[tab.id].max_depth, tabs[tab.id].current.depth + 1);
+            }
         }
     }
 );

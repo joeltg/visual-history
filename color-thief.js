@@ -23,6 +23,7 @@
   It also simplifies some of the canvas context manipulation
   with a set of helper functions.
 */
+
 var CanvasImage = function (image) {
     this.canvas  = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');

@@ -11,7 +11,6 @@ var head = document.head || document.getElementsByTagName( "head" )[0] || docume
 head.insertBefore(css, head.firstChild);
 
 var body = document.getElementsByTagName("body")[0];
-
 var d = makeDiv();
 
 function makeDiv() {
