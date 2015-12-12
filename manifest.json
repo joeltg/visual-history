@@ -2,7 +2,7 @@
   "name": "Visual History",
   "description": "Tree-based browser history navigation and visualization",
   "version": "1.2.2",
-  "author": "Joel Gustafson and Kenneth Friedman",
+  "author": "nDimensional Studios",
   "permissions": [
     "tabs",
     "webNavigation",
