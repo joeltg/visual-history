@@ -1,5 +1,7 @@
 # Visual History
 
+[Project Site](ndimensional.github.io/visual_history)
+
 [View on Chrome Web Store](https://chrome.google.com/webstore/detail/visual-history/nkckokcpjekkokllfplejfkocaikmnml)
 
 Modern browsers lose rich information when they compress browsing history into a linear stack, which makes backtracking from a forrest of links surprisingly difficult. We can do better.
