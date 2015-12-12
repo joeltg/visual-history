@@ -1,10 +1,10 @@
 # Visual History
 
-Modern browsers lose rich information when they compress browsing history into a linear stack, which makes backtracking from a forrest of links surprisingly difficult. Visual History augments browser navigation in a way that is both quick, reliable, and predictable for power users, and also beautiful and intuitive for beginners.
+Modern browsers lose rich information when they compress browsing history into a linear stack, which makes backtracking from a forrest of links surprisingly difficult. We can do better.
+
+Visual History is a Chrome extension that delinearizes your browsing history with a richer alternative to the Back and Forward buttons. Instead of a stack of previously visited destinations, Visual History maintains the forest of trees that represent each tab’s path around the internet, and lets you easily backtrack to any site they recently visited. 
 
 ![](/screenshots/0.png)
-
-Visual History is a Chrome extension that delinearizes your browsing history with a richer alternative to the Back and Forward buttons. Instead of a stack of previously visited destinations, Visual History maintains the forest of trees that represent each tab’s path around the internet, and lets the user easily backtrack to any site they recently visited. 
 
 ![](/screenshots/1.png)
 
