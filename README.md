@@ -1,5 +1,7 @@
 # Visual History
 
+[View on Chrome Web Store](https://chrome.google.com/webstore/detail/visual-history/nkckokcpjekkokllfplejfkocaikmnml)
+
 Modern browsers lose rich information when they compress browsing history into a linear stack, which makes backtracking from a forrest of links surprisingly difficult. We can do better.
 
 Visual History is a Chrome extension that delinearizes your browsing history with a richer alternative to the Back and Forward buttons. Instead of a stack of previously visited destinations, Visual History maintains the forest of trees that represent each tab’s path around the internet, and lets you easily backtrack to any site you've recently visited. 
