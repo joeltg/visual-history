@@ -218,9 +218,9 @@ function update(source) {
     link.enter().append("line")
         .attr("class", "histree-link")
         .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y+75; })
+        .attr("y1", function(d) { return d.source.y+85; })
         .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y-40; });
+        .attr("y2", function(d) { return d.target.y-50; });
 
     // Stash the old positions for transition.
     nodes.forEach(function(d) {
