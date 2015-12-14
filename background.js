@@ -133,7 +133,7 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                 if (!chrome.runtime.lastError) {
                     var current = tabs[details.tabId].current;
                     if (!current.icon_url) current.icon_url = tab.favIconUrl;
-                    if (!current.title) current.title = tab.title;
+                    if (tab.title) current.title = tab.title;
                     var img = new Image;
                     img.onload = function() { current.img_color = colorThief.getColor(img); };
                     img.src = tab.favIconUrl;

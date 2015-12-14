@@ -160,6 +160,7 @@ function update(source) {
         });
     nodeEnter.append("text")
         .attr("x", 0)
+        .attr("y", "10px")
         .attr("dy", "4.5em")
         .attr("text-anchor", "middle")
         .text(function(d) { return d.name; })
@@ -167,6 +168,7 @@ function update(source) {
         .style("font-weight", "bold");
     nodeEnter.append("text")
         .attr("x", 0)
+        .attr("y", "10px")
         .attr("dy", "5.5em")
         .attr("text-anchor", "middle")
         .text(function(d) { return d.url; });
