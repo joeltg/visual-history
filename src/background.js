@@ -12,33 +12,40 @@ const imageSize = 64;
 let SELECTING = false;
 
 class Tab {
-    constructor(url) {
+    constructor(tab) {
+        tabs[tab.id] = this;
         this.currentId = this.i = 0;
-        // readability counts, except for really schnazzy one-liners
-        this.nodes = {[url]: this.currentNode = this.rootNode = new Node(url, this)};
+        this.nodes = {};
+        this.rootNode = this.currentNode = new Node(tab.url, this);
     }
-    update(key, val) {
-        if (key === 'favIconUrl')
-            this.currentNode.favIconUrl = val;
-
-        else if (key === 'title')
-            this.currentNode.title = val;
-
-        else if (key === 'url') {
-            const node = this.nodes[val];
-            if (node) this.updateCurrent(node);
-            else this.nodes[val] = this.updateCurrent(this.currentNode.insert(val));
+    replaceTab(addedTabId) {
+        tabs[addedTabId] = this;
+        chrome.tabs.get(addedTabId, tab => {
+            const node = this.updateCurrent(this.currentNode.insert(tab.url));
+            if (tab.favIconUrl) node.favIconUrl = tab.favIconUrl;
+            if (tab.title) node.title = tab.title;
+        });
+    }
+    updateProps(tab, update) {
+        if (update.url) {
+            if (this.currentNode.url !== update.url) {
+                if (this.nodes[update.url]) this.updateCurrent(this.nodes[update.url]);
+                else this.updateCurrent(this.currentNode.insert(update.url));
+            }
         }
+        const current = this.currentNode;
+        if (tab.title) current.title = tab.title;
+        if (tab.favIconUrl) current.favIconUrl = tab.favIconUrl;
     }
-    updateCurrent(newCurrent) {
+    updateCurrent(currentNode) {
         // handle reassigning all the current id and node pointers
         // and return the new node for easy chaining later
-        newCurrent.current = true;
-        newCurrent.preview = false;
+        currentNode.current = true;
+        currentNode.preview = false;
         this.currentNode.current = false;
-        this.currentNode = newCurrent;
-        this.currentId = newCurrent.id;
-        return newCurrent;
+        this.currentNode = currentNode;
+        this.currentId = currentNode.id;
+        return currentNode;
     }
 }
 
@@ -46,6 +53,7 @@ class Node {
     // we have to pass the parent tab around
     // to keep track of tab-scoped node IDs.
     constructor(url, tab) {
+        tab.nodes[url] = this;
         this.url = url;
         this.index = false;
         this.tab = tab;
@@ -61,18 +69,23 @@ class Node {
         node.index = this.children.push(node) - 1;
         return node;
     }
+    remove() {
+        if (this.parent && this.index !== false) {
+            this.parent.children.splice(this.index, 1);
+            delete this;
+        }
+    }
 }
 
 chrome.browserAction.onClicked.addListener(tab => {
     if (SELECTING) {
-        // SELECTING will get reset to false when content.js
-        // evaluates its callback closure. Resetting this too
-        // early will fuck shit up. Just leave it.
+        // SELECTING will get reset to false when content.js evaluates its callback closure.
         chrome.tabs.sendMessage(tab.id, {type: 'close'});
     }
     else {
         SELECTING = true;
-        sendTree(tab.id, false);
+        const tree = makeTree(tab.id, false);
+        sendTree(tab.id, tree);
     }
 });
 
@@ -84,7 +97,6 @@ chrome.contextMenus.create({
             const current = tabs[tab.id].currentNode;
             chrome.tabs.sendMessage(tab.id, {type: "clicked"}, result => {
                 const node = current.insert(info.linkUrl);
-                tabs[tab.id].nodes[info.linkUrl] = node;
                 node.title = result.text;
                 node.favIconUrl = current.favIconUrl;
                 node.preview = true;
@@ -93,22 +105,14 @@ chrome.contextMenus.create({
     }
 });
 
-chrome.tabs.onCreated.addListener(tab => tabs[tab.id] = new Tab(tab.url));
+chrome.tabs.onCreated.addListener(tab => new Tab(tab));
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    for (const key in changeInfo)
-        if (changeInfo.hasOwnProperty(key) && tabs[tabId])
-            tabs[tabId].update(key, changeInfo[key]);
+    if (tabs[tabId]) tabs[tabId].updateProps(tab, changeInfo);
 });
 
 chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
-    tabs[addedTabId] = tabs[removedTabId];
-    chrome.tabs.get(addedTabId, tab => {
-        const node = tabs[addedTabId].updateCurrent(tabs[addedTabId].currentNode.insert(tab.url));
-        tabs[addedTabId].nodes[tab.url] = node;
-        if (tab.favIconUrl) node.favIconUrl = tab.favIconUrl;
-        if (tab.title) node.title = tab.title;
-    });
+    tabs[removedTabId].replaceTab(addedTabId);
     delete tabs[removedTabId];
 });
 
@@ -117,13 +121,16 @@ chrome.tabs.onRemoved.addListener(tabId => delete tabs[tabId]);
 const addNode = (node) => ({
     title: node.title,
     url: node.url,
-    preview: node.preview,
+    preview: node.preview || !node.favIconUrl,
     id: node.id,
-    favIconUrl: node.favIconUrl || false,
-    children: node.children && node.children.length ? node.children.map(child => addNode(child)) : undefined
+    favIconUrl: node.favIconUrl || node.parent.favIconUrl || false,
+    children: node.children &&
+        node.children.length ?
+            node.children.map(child => addNode(child)) :
+            undefined
 });
 
-function sendTree(tabId, command) {
+function makeTree(tabId, command) {
     const tab = tabs[tabId];
     const currentId = command ? move(tab, command) : tab.currentId;
     const tree = d3_hierarchy.hierarchy(addNode(tab.rootNode));
@@ -161,7 +168,7 @@ function sendTree(tabId, command) {
         id: i++
     }));
 
-    const data = {
+    return {
         type: 'tree',
         links: links,
         nodes: nodes,
@@ -175,7 +182,9 @@ function sendTree(tabId, command) {
             y: tab.currentNode.y
         }
     };
+}
 
+function sendTree(tabId, data) {
     chrome.tabs.sendMessage(tabId, data, update =>
         chrome.tabs.get(tabId, tab => {
             SELECTING = false;
@@ -206,14 +215,20 @@ function move(tab, command) {
 
     // right sibling becomes current
     else if (command === 'move-right') {
-        if (current.index !== false && current.parent.children.length > 1 + current.index)
-            currentId = tab.updateCurrent(current.parent.children[current.index + 1]).id;
+        if (current.parent) {
+            const siblings = current.parent.children, index = current.index;
+            if (index !== false && siblings.length > 1  + index)
+                currentId = tab.updateCurrent(siblings[index + 1]).id;
+        }
     }
 
     // left sibling becomes current
     else if (command === 'move-left') {
-        if (current.index !== false && current.index > 0 && current.parent.children.length > 1)
-            currentId = tab.updateCurrent(current.parent.children[current.index - 1]).id;
+        if (current.parent) {
+            const siblings = current.parent.children, index = current.index;
+            if (index && siblings.length > 1)
+                currentId = tab.updateCurrent(siblings[index - 1]).id;
+        }
     }
 
     return currentId;
@@ -235,10 +250,12 @@ function sendCommand(tabId, command) {
 
 chrome.commands.onCommand.addListener(command => {
     chrome.tabs.query({active: true, currentWindow: true}, activeTabs => {
-        if (SELECTING) sendCommand(activeTabs[0].id, command);
+        const id = activeTabs[0].id;
+        if (SELECTING) sendCommand(id, command);
         else {
             SELECTING = true;
-            sendTree(activeTabs[0].id, command);
+            const tree = makeTree(id, command);
+            sendTree(id, tree);
         }
     });
 });

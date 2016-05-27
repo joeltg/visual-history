@@ -74,7 +74,7 @@ function makeTree(data) {
     // append an html wrapper div to the node g cells and save the selector to later
     const div = createNode.append('foreignObject')
         .attr('x', `-${nodeWidth / 2.0}px`)
-        .attr('y', `${imageSize / 2.0 + 5}px`)
+        .attr('y', `${imageSize / 2.0}px`)
         .attr('width', `${nodeWidth}px`)
         .attr('height', `${imageSize}px`)
         .append('xhtml:div')
