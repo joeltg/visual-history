@@ -32,25 +32,25 @@
       "suggested_key": {
         "default": "Ctrl+Up"
       },
-      "description": "Navigate up in the tree"
+      "description": "Move up the tree"
     },
     "move-down": {
       "suggested_key": {
         "default": "Ctrl+Down"
       },
-      "description": "Navigate down in the tree"
+      "description": "Move down the tree"
     },
     "move-left": {
       "suggested_key": {
         "default": "Ctrl+Left"
       },
-      "description": "Navigate to the left in the tree"
+      "description": "Move to the left in the tree"
     },
     "move-right": {
       "suggested_key": {
         "default": "Ctrl+Right"
       },
-      "description": "Navigate to the right in the tree"
+      "description": "Move to the right in the tree"
     }
   },
   "manifest_version": 2
