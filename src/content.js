@@ -34,6 +34,11 @@ function makeTree(data) {
     // freeze the document body and class the container
     document.body.classList.add('visual-history-freeze');
     container.className = 'visual-history-container-visible';
+    console.log('setting container top and left to', document.body.scrollTop, document.body.scrollLeft);
+
+    container.style.setProperty("top", String(document.body.scrollTop) + 'px', "important");
+    container.style.setProperty("left", String(document.body.scrollLeft) + 'px', "important");
+    console.log('container is now', container.style.top, container.style.left);
 
     // start appending all the things
 
@@ -121,8 +126,8 @@ function updateCurrent(current) {
     }
 
     // center current position
-    container.scrollLeft = current.x - window.innerWidth / 2.0;
-    container.scrollTop = current.y - window.innerHeight / 2.0;
+    container.scrollLeft = current.x - document.body.clientWidth / 2.0;
+    container.scrollTop = current.y - document.body.clientHeight / 2.0;
 }
 
 function click(node) {

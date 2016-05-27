@@ -35,8 +35,10 @@ class Tab {
             }
         }
         const current = this.currentNode;
-        if (tab.title) current.title = tab.title;
-        if (tab.favIconUrl) current.favIconUrl = tab.favIconUrl;
+        if (tab.url === current.url) {
+            if (tab.title) current.title = tab.title;
+            if (tab.favIconUrl) current.favIconUrl = tab.favIconUrl;
+        }
     }
     updateCurrent(currentNode) {
         // handle reassigning all the current id and node pointers
@@ -119,22 +121,29 @@ chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
 
 chrome.tabs.onRemoved.addListener(tabId => delete tabs[tabId]);
 
-const addNode = (node) => ({
+const forceHTTPS = (url, isHTTPS) =>
+    isHTTPS && url.substring(0, 4) === 'http' && url[4] !== 's' ?
+        'https' + url.substring(4) :
+        url;
+
+const addNode = (node, isHTTPS) => ({
     title: node.title,
     url: node.url,
     preview: node.preview || !node.favIconUrl,
     id: node.id,
-    favIconUrl: node.favIconUrl || node.parent.favIconUrl || false,
+    favIconUrl: forceHTTPS(node.favIconUrl || node.parent.favIconUrl || false, isHTTPS),
     children: node.children &&
         node.children.length ?
-            node.children.map(child => addNode(child)) :
+            node.children.map(child => addNode(child, isHTTPS)) :
             undefined
 });
 
 function makeTree(tabId, command) {
     const tab = tabs[tabId];
+    if (!tab) return false;
     const currentId = command ? move(tab, command) : tab.currentId;
-    const tree = d3_hierarchy.hierarchy(addNode(tab.rootNode));
+    const isHTTPS = tab.currentNode.url.substring(0, 5) === 'https';
+    const tree = d3_hierarchy.hierarchy(addNode(tab.rootNode, isHTTPS));
     const root = d3_hierarchy.tree().nodeSize([nodeWidth, nodeHeight])(tree);
 
     let minX = 0, maxX = 0;
@@ -186,7 +195,7 @@ function makeTree(tabId, command) {
 }
 
 function sendTree(tabId, data) {
-    chrome.tabs.sendMessage(tabId, data, update => {
+    if (data) chrome.tabs.sendMessage(tabId, data, update => {
         if (update) chrome.tabs.get(tabId, tab => {
             SELECTING = false;
             const url = update.url || tabs[tabId].currentNode.url;
