@@ -1,6 +1,7 @@
 /**
  * Created by joel on 5/16/16.
  */
+
 "use strict";
 
 const tabs = {};
@@ -185,13 +186,13 @@ function makeTree(tabId, command) {
 }
 
 function sendTree(tabId, data) {
-    chrome.tabs.sendMessage(tabId, data, update =>
-        chrome.tabs.get(tabId, tab => {
+    chrome.tabs.sendMessage(tabId, data, update => {
+        if (update) chrome.tabs.get(tabId, tab => {
             SELECTING = false;
             const url = update.url || tabs[tabId].currentNode.url;
             if (url !== tab.url) chrome.tabs.update(tabId, {url: url});
-        })
-    );
+        });
+    });
 }
 
 function move(tab, command) {

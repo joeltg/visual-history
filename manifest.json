@@ -5,7 +5,6 @@
   "author": "Joel Gustafson and Kenny Friedman",
   "permissions": [
     "tabs",
-    "activeTab",
     "contextMenus"
   ],
   "background": {

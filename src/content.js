@@ -2,6 +2,8 @@
  * Created by joel on 5/18/16.
  */
 
+"use strict";
+
 let callback = null;
 let SELECTING = false;
 let svg = null;

@@ -29,7 +29,7 @@ body.visual-history-freeze {
 
 #visual-history-svg {
     display: block;
-    margin: auto;
+    margin: 8px auto 0 auto;
 
     z-index:10002;
     overflow: auto;
