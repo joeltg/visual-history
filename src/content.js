@@ -143,7 +143,7 @@ function makeTitle(url) {
 document.documentElement.onkeyup = e => {
     const key = e.keyCode || e.which;
     // exit on Ctrl or Cmd release
-    if (key === 17 || e.metaKey) exit(false);
+    if (key === 17 || e.key === 'Mega' || e.metaKey) exit(false);
 };
 
 document.documentElement.onkeydown = e => {
