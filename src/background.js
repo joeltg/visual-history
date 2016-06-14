@@ -10,13 +10,12 @@ const nodeWidth = 256;
 const nodeHeight = 172;
 const imageSize = 64;
 
-let SELECTING = false;
-
 class Tab {
     constructor(tab) {
         tabs[tab.id] = this;
         this.currentId = this.i = 0;
         this.nodes = {};
+        this.selecting = false;
         this.rootNode = this.currentNode = new Node(tab.url, this);
     }
     replaceTab(addedTabId) {
@@ -81,14 +80,16 @@ class Node {
 }
 
 chrome.browserAction.onClicked.addListener(tab => {
-    if (SELECTING) {
-        // SELECTING will get reset to false when content.js evaluates its callback closure.
-        chrome.tabs.sendMessage(tab.id, {type: 'close'});
-    }
-    else {
-        SELECTING = true;
-        const tree = makeTree(tab.id, false);
-        sendTree(tab.id, tree);
+    if (tabs[tab.id]) {
+        if (tabs[tab.id].selecting) {
+            // selecting will get reset to false when content.js evaluates its callback closure.
+            chrome.tabs.sendMessage(tab.id, {type: 'close'});
+        }
+        else {
+            tabs[tab.id].selecting = true;
+            const tree = makeTree(tab.id, false);
+            sendTree(tab.id, tree);
+        }
     }
 });
 
@@ -115,8 +116,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
-    tabs[removedTabId].replaceTab(addedTabId);
-    delete tabs[removedTabId];
+    if (tabs[removedTabId]) {
+        tabs[removedTabId].replaceTab(addedTabId);
+        delete tabs[removedTabId];
+    }
 });
 
 chrome.tabs.onRemoved.addListener(tabId => delete tabs[tabId]);
@@ -197,7 +200,7 @@ function makeTree(tabId, command) {
 function sendTree(tabId, data) {
     if (data) chrome.tabs.sendMessage(tabId, data, update => {
         if (update) chrome.tabs.get(tabId, tab => {
-            SELECTING = false;
+            tabs[tabId].selecting = false;
             const url = update.url || tabs[tabId].currentNode.url;
             if (url !== tab.url) chrome.tabs.update(tabId, {url: url});
         });
@@ -261,11 +264,13 @@ function sendCommand(tabId, command) {
 chrome.commands.onCommand.addListener(command => {
     chrome.tabs.query({active: true, currentWindow: true}, activeTabs => {
         const id = activeTabs[0].id;
-        if (SELECTING) sendCommand(id, command);
-        else {
-            SELECTING = true;
-            const tree = makeTree(id, command);
-            sendTree(id, tree);
+        if (tabs[id]) {
+            if (tabs[id].selecting) sendCommand(id, command);
+            else {
+                tabs[id].selecting = true;
+                const tree = makeTree(id, command);
+                sendTree(id, tree);
+            }
         }
     });
 });
