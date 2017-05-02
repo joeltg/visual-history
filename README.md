@@ -1,5 +1,5 @@
 # Visual History
 
-[Project Site](http://joeltg.github.io/visual_history/)
+[Project Site](http://joelgustafson.com/projects/visual-history/)
 
 [View on Chrome Web Store](https://chrome.google.com/webstore/detail/visual-history/nkckokcpjekkokllfplejfkocaikmnml)
