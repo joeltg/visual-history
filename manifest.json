@@ -1,20 +1,23 @@
 {
   "name": "Visual History",
   "description": "Tree-based browser history navigation and visualization",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "author": "Joel Gustafson and Kenny Friedman",
   "permissions": [
+    "activeTab",
     "tabs",
-    "contextMenus"
+    "contextMenus",
+    "history",
+    "webNavigation"
   ],
   "background": {
     "persistent": true,
-    "scripts": ["lib/d3-hierarchy.v0.2.min.js", "src/background.js"]
+    "scripts": ["src/background.js"]
   },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["lib/d3-selection.v0.7.min.js", "src/content.js"],
+      "js": ["src/content.js"],
       "css": ["src/content.css"]
     }
   ],
@@ -24,7 +27,9 @@
   },
   "browser_action": {
     "default_icon": { "38": "icons/icon38.png" },
-    "default_title": "Show Tree"
+    "default_title": "Show Tree",
+    "default_popup": "src/popup.html",
+    "browser_style": true
   },
   "web_accessible_resources": ["icons/tab.png", "src/tree.css"],
   "commands": {
@@ -32,25 +37,25 @@
       "suggested_key": {
         "default": "Ctrl+Up"
       },
-      "description": "Move up the tree"
+      "description": "Navigate to the previous sibling"
     },
     "move-down": {
       "suggested_key": {
         "default": "Ctrl+Down"
       },
-      "description": "Move down the tree"
+      "description": "Navigate to the next sibling"
     },
-    "move-left": {
+    "move-back": {
       "suggested_key": {
         "default": "Ctrl+Left"
       },
-      "description": "Move to the left in the tree"
+      "description": "Navigate back in the tree"
     },
     "move-right": {
       "suggested_key": {
         "default": "Ctrl+Right"
       },
-      "description": "Move to the right in the tree"
+      "description": "Navigate forward in the tree"
     }
   },
   "manifest_version": 2
