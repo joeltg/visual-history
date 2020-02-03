@@ -1,62 +1,48 @@
 {
-  "name": "Visual History",
-  "description": "Tree-based browser history navigation and visualization",
-  "version": "3.0.0",
-  "author": "Joel Gustafson and Kenny Friedman",
-  "permissions": [
-    "activeTab",
-    "tabs",
-    "contextMenus",
-    "history",
-    "webNavigation"
-  ],
-  "background": {
-    "persistent": true,
-    "scripts": ["src/background.js"]
-  },
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["src/content.js"],
-      "css": ["src/content.css"]
-    }
-  ],
-  "icons": {
-    "128": "icons/icon.png",
-    "16": "icons/icon16.png"
-  },
-  "browser_action": {
-    "default_icon": { "38": "icons/icon38.png" },
-    "default_title": "Show Tree",
-    "default_popup": "src/popup.html",
-    "browser_style": true
-  },
-  "web_accessible_resources": ["icons/tab.png", "src/tree.css"],
-  "commands": {
-    "move-up": {
-      "suggested_key": {
-        "default": "Ctrl+Up"
-      },
-      "description": "Navigate to the previous sibling"
-    },
-    "move-down": {
-      "suggested_key": {
-        "default": "Ctrl+Down"
-      },
-      "description": "Navigate to the next sibling"
-    },
-    "move-back": {
-      "suggested_key": {
-        "default": "Ctrl+Left"
-      },
-      "description": "Navigate back in the tree"
-    },
-    "move-right": {
-      "suggested_key": {
-        "default": "Ctrl+Right"
-      },
-      "description": "Navigate forward in the tree"
-    }
-  },
-  "manifest_version": 2
+	"name": "Visual History",
+	"description": "Tree-based browser history navigation and visualization",
+	"version": "4.0.0",
+	"author": "Joel Gustafson and Kenny Friedman",
+	"permissions": ["webNavigation"],
+	"background": {
+		"scripts": ["src/background.js"]
+	},
+	"icons": {
+		"128": "icons/icon.png",
+		"16": "icons/icon16.png"
+	},
+	"browser_action": {
+		"default_icon": { "128": "icons/icon.png", "38": "icons/icon38.png" },
+		"default_title": "Show Tree",
+		"default_popup": "src/popup.html",
+		"browser_style": true
+	},
+	"web_accessible_resources": ["icons/tab.png", "src/tree.css"],
+	"commands": {
+		"move-up": {
+			"suggested_key": {
+				"default": "Ctrl+Up"
+			},
+			"description": "Navigate to the previous sibling"
+		},
+		"move-down": {
+			"suggested_key": {
+				"default": "Ctrl+Down"
+			},
+			"description": "Navigate to the next sibling"
+		},
+		"move-back": {
+			"suggested_key": {
+				"default": "Ctrl+Left"
+			},
+			"description": "Navigate back in the tree"
+		},
+		"move-right": {
+			"suggested_key": {
+				"default": "Ctrl+Right"
+			},
+			"description": "Navigate forward in the tree"
+		}
+	},
+	"manifest_version": 2
 }
